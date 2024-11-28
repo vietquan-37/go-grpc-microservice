@@ -1,0 +1,20 @@
+syntax="proto3";
+package pb;
+option go_package="github.com/vietquan-37/order-service/pkg/pb";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+message InitialOrderRequest{
+ int32 user_id=1[(buf.validate.field).int32.gt=0];
+}
+message AddProductRequest{
+  int32 product_id=1[(buf.validate.field).int32.gt=0];
+  int32 user_id=2[(buf.validate.field).int32.gt=0];
+  int64 stock=3 [(buf.validate.field).int64.gt=0];
+}
+message CommonResponse{
+  string message=1;
+}
+service OrderService {
+  rpc InitialOrder(InitialOrderRequest)returns(google.protobuf.Empty){}
+  rpc AddProduct(AddProductRequest)returns(CommonResponse){}
+}

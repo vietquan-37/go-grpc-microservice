@@ -1,0 +1,23 @@
+syntax = "proto3";
+package pb;
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+option go_package = "github.com/vietquan-37/order-service/pkg/pb";
+
+message ProductResponse{
+  int32 id=1;
+  string name = 2;
+  string description = 3;
+  float price = 4;
+  int64  stock = 5;
+}
+message ProductRequest{
+  int32 id = 1;
+}
+service ProductService{
+
+  rpc findOneProduct(ProductRequest)returns(ProductResponse){}
+
+}
+
+

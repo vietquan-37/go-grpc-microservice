@@ -1,0 +1,47 @@
+syntax = "proto3";
+package pb;
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+option go_package = "github.com/vietquan-37/product-service/pkg/pb";
+message CreateProductRequest{
+  string name = 1 [(buf.validate.field).string.min_len = 3 ,(buf.validate.field).string.max_len = 16];
+  string description = 2[(buf.validate.field).string.min_len = 8 ,(buf.validate.field).string.max_len = 255] ;
+  float price = 3[(buf.validate.field).int32.gt = 0];
+  int64  stock = 4[(buf.validate.field).int32.gt = 0];
+}
+message ProductResponse{
+  int32 id=1;
+  string name = 2;
+  string description = 3;
+  float price = 4;
+  int64  stock = 5;
+}
+message ProductResponseList{
+  repeated ProductResponse products = 1;
+}
+
+message UpdateProductRequest{
+  int32 id=1;
+  float price = 2 [(buf.validate.field).int32.gt = 0];
+  int64  stock = 3[(buf.validate.field).int32.gt = 0];
+}
+message ProductRequest{
+  int32 id = 1;
+}
+message CommonResponse{
+  string message = 1;
+}
+message DecreaseStockRequest{
+  int32 product_id = 1;
+  int64 quantity = 2[(buf.validate.field).int32.gt = 0];
+}
+service ProductService{
+  rpc CreateProduct(CreateProductRequest)returns(ProductResponse){}
+  rpc DeleteProduct(ProductRequest)returns(CommonResponse){}
+  rpc findAllProduct(google.protobuf.Empty)returns(ProductResponseList){}
+  rpc findOneProduct(ProductRequest)returns(ProductResponse){}
+  rpc updateProduct(UpdateProductRequest)returns(ProductResponse){}
+  rpc DecreaseProductStock(DecreaseStockRequest)returns(CommonResponse){}
+}
+
+
