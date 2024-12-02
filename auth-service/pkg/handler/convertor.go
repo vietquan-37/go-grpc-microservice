@@ -4,6 +4,7 @@ import (
 	"github.com/vietquan-37/auth-service/pkg/model"
 	"github.com/vietquan-37/auth-service/pkg/model/enum"
 	"github.com/vietquan-37/auth-service/pkg/pb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func convertUser(req *pb.CreateUserRequest) *model.User {
@@ -17,9 +18,11 @@ func convertUser(req *pb.CreateUserRequest) *model.User {
 
 func convertUserResponse(user model.User) *pb.UserResponse {
 	return &pb.UserResponse{
+		UserId:      int32(user.ID),
 		UserName:    user.PhoneNumber,
 		PhoneNumber: user.PhoneNumber,
 		Role:        string(user.Role),
+		CreateAt:    timestamppb.New(user.CreatedAt),
 	}
 
 }

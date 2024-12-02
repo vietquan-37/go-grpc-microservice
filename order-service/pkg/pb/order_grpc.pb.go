@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -20,16 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OrderService_InitialOrder_FullMethodName = "/pb.OrderService/InitialOrder"
 	OrderService_AddProduct_FullMethodName   = "/pb.OrderService/AddProduct"
+	OrderService_DeleteDetail_FullMethodName = "/pb.OrderService/DeleteDetail"
+	OrderService_GetUserCart_FullMethodName  = "/pb.OrderService/GetUserCart"
 )
 
 // OrderServiceClient is the client API for OrderService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrderServiceClient interface {
-	InitialOrder(ctx context.Context, in *InitialOrderRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	AddProduct(ctx context.Context, in *AddProductRequest, opts ...grpc.CallOption) (*CommonResponse, error)
+	DeleteDetail(ctx context.Context, in *DeleteDetailRequest, opts ...grpc.CallOption) (*CommonResponse, error)
+	GetUserCart(ctx context.Context, in *UserCartRequest, opts ...grpc.CallOption) (*UserCartResponse, error)
 }
 
 type orderServiceClient struct {
@@ -38,16 +39,6 @@ type orderServiceClient struct {
 
 func NewOrderServiceClient(cc grpc.ClientConnInterface) OrderServiceClient {
 	return &orderServiceClient{cc}
-}
-
-func (c *orderServiceClient) InitialOrder(ctx context.Context, in *InitialOrderRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, OrderService_InitialOrder_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *orderServiceClient) AddProduct(ctx context.Context, in *AddProductRequest, opts ...grpc.CallOption) (*CommonResponse, error) {
@@ -60,12 +51,33 @@ func (c *orderServiceClient) AddProduct(ctx context.Context, in *AddProductReque
 	return out, nil
 }
 
+func (c *orderServiceClient) DeleteDetail(ctx context.Context, in *DeleteDetailRequest, opts ...grpc.CallOption) (*CommonResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonResponse)
+	err := c.cc.Invoke(ctx, OrderService_DeleteDetail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderServiceClient) GetUserCart(ctx context.Context, in *UserCartRequest, opts ...grpc.CallOption) (*UserCartResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserCartResponse)
+	err := c.cc.Invoke(ctx, OrderService_GetUserCart_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderServiceServer is the server API for OrderService service.
 // All implementations should embed UnimplementedOrderServiceServer
 // for forward compatibility.
 type OrderServiceServer interface {
-	InitialOrder(context.Context, *InitialOrderRequest) (*emptypb.Empty, error)
 	AddProduct(context.Context, *AddProductRequest) (*CommonResponse, error)
+	DeleteDetail(context.Context, *DeleteDetailRequest) (*CommonResponse, error)
+	GetUserCart(context.Context, *UserCartRequest) (*UserCartResponse, error)
 }
 
 // UnimplementedOrderServiceServer should be embedded to have
@@ -75,11 +87,14 @@ type OrderServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedOrderServiceServer struct{}
 
-func (UnimplementedOrderServiceServer) InitialOrder(context.Context, *InitialOrderRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InitialOrder not implemented")
-}
 func (UnimplementedOrderServiceServer) AddProduct(context.Context, *AddProductRequest) (*CommonResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddProduct not implemented")
+}
+func (UnimplementedOrderServiceServer) DeleteDetail(context.Context, *DeleteDetailRequest) (*CommonResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDetail not implemented")
+}
+func (UnimplementedOrderServiceServer) GetUserCart(context.Context, *UserCartRequest) (*UserCartResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserCart not implemented")
 }
 func (UnimplementedOrderServiceServer) testEmbeddedByValue() {}
 
@@ -101,24 +116,6 @@ func RegisterOrderServiceServer(s grpc.ServiceRegistrar, srv OrderServiceServer)
 	s.RegisterService(&OrderService_ServiceDesc, srv)
 }
 
-func _OrderService_InitialOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InitialOrderRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrderServiceServer).InitialOrder(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OrderService_InitialOrder_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderServiceServer).InitialOrder(ctx, req.(*InitialOrderRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _OrderService_AddProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddProductRequest)
 	if err := dec(in); err != nil {
@@ -137,6 +134,42 @@ func _OrderService_AddProduct_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderService_DeleteDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDetailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).DeleteDetail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_DeleteDetail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).DeleteDetail(ctx, req.(*DeleteDetailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrderService_GetUserCart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserCartRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).GetUserCart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_GetUserCart_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).GetUserCart(ctx, req.(*UserCartRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -145,12 +178,16 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*OrderServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "InitialOrder",
-			Handler:    _OrderService_InitialOrder_Handler,
-		},
-		{
 			MethodName: "AddProduct",
 			Handler:    _OrderService_AddProduct_Handler,
+		},
+		{
+			MethodName: "DeleteDetail",
+			Handler:    _OrderService_DeleteDetail_Handler,
+		},
+		{
+			MethodName: "GetUserCart",
+			Handler:    _OrderService_GetUserCart_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

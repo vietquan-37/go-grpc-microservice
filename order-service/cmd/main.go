@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	c, err := config.LoadConfig("../")
+	c, err := config.LoadConfig("./")
 	if err != nil {
 		log.Fatalf("error while loading config: %v", err)
 	}
@@ -29,8 +29,9 @@ func main() {
 	}
 	orderRepo := InitOrderRepo(d)
 	detailRepo := InitOrderDetailRepo(d)
-	productClient := client.InitProductClient(c.ProductUrl)
-	h := handler.NewOrderHandler(productClient, orderRepo, detailRepo)
+	productClient := client.InitProductClient(c.ProductURL)
+	authClient := client.InitAuthClient(c.AuthURL)
+	h := handler.NewOrderHandler(productClient, authClient, orderRepo, detailRepo)
 	grpcServer := grpc.NewServer()
 	pb.RegisterOrderServiceServer(grpcServer, h)
 	reflection.Register(grpcServer)

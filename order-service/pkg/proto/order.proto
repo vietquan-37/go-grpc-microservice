@@ -3,9 +3,7 @@ package pb;
 option go_package="github.com/vietquan-37/order-service/pkg/pb";
 import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
-message InitialOrderRequest{
- int32 user_id=1[(buf.validate.field).int32.gt=0];
-}
+
 message AddProductRequest{
   int32 product_id=1[(buf.validate.field).int32.gt=0];
   int32 user_id=2[(buf.validate.field).int32.gt=0];
@@ -14,7 +12,29 @@ message AddProductRequest{
 message CommonResponse{
   string message=1;
 }
+message DeleteDetailRequest{
+  int32  id=1;
+  int32 user_id=2;
+}
+message UserCartResponse{
+  int32 order_id=1;
+  float amount=2;
+  string status=3;
+  repeated ItemCart items=4;
+}
+message ItemCart{
+  int32 id=1;
+  int32 product_id=2;
+  int64 quantity=3;
+  float price=4;
+}
+message UserCartRequest{
+  int32  user_id=1;
+}
+
 service OrderService {
-  rpc InitialOrder(InitialOrderRequest)returns(google.protobuf.Empty){}
+
   rpc AddProduct(AddProductRequest)returns(CommonResponse){}
+  rpc DeleteDetail(DeleteDetailRequest)returns(CommonResponse){}
+  rpc GetUserCart(UserCartRequest)returns(UserCartResponse){}
 }

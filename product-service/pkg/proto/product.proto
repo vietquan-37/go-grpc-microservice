@@ -6,8 +6,8 @@ option go_package = "github.com/vietquan-37/product-service/pkg/pb";
 message CreateProductRequest{
   string name = 1 [(buf.validate.field).string.min_len = 3 ,(buf.validate.field).string.max_len = 16];
   string description = 2[(buf.validate.field).string.min_len = 8 ,(buf.validate.field).string.max_len = 255] ;
-  float price = 3[(buf.validate.field).int32.gt = 0];
-  int64  stock = 4[(buf.validate.field).int32.gt = 0];
+  float price = 3[(buf.validate.field).float.gt = 0.0];
+  int64  stock = 4[(buf.validate.field).int64.gt = 0];
 }
 message ProductResponse{
   int32 id=1;
@@ -22,8 +22,8 @@ message ProductResponseList{
 
 message UpdateProductRequest{
   int32 id=1;
-  float price = 2 [(buf.validate.field).int32.gt = 0];
-  int64  stock = 3[(buf.validate.field).int32.gt = 0];
+  float price = 2 [(buf.validate.field).float.gt = 0.0];
+  int64  stock = 3[(buf.validate.field).int64.gt = 0];
 }
 message ProductRequest{
   int32 id = 1;

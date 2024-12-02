@@ -5,7 +5,8 @@ import "github.com/spf13/viper"
 type Config struct {
 	DbSource          string `mapstructure:"DB_SOURCE"`
 	GrpcServerAddress string `mapstructure:"GRPC_SERVER_ADDRESS"`
-	ProductUrl        string `mapstructure:"PRODUCT_URL"`
+	ProductURL        string `mapstructure:"PRODUCT_URL"`
+	AuthURL           string `mapstructure:"AUTH_URL"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

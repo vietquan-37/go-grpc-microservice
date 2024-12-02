@@ -8,7 +8,7 @@ import (
 
 type Order struct {
 	gorm.Model
-	Amount      float32
+	Amount      float64
 	OrderDate   time.Time
 	Status      enum.Status
 	UserId      uint

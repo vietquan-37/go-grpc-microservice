@@ -10,28 +10,26 @@ import (
 	"github.com/vietquan-37/order-service/pkg/repo"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
 )
 
 type OrderHandler struct {
 	pb.UnimplementedOrderServiceServer
 	ProductClient client.ProductClient
+	AuthClient    client.AuthClient
 	Repo          repo.IOrderRepo
 	DetailRepo    repo.IOrderDetailRepo
 }
 
-func NewOrderHandler(productClient client.ProductClient, repo repo.IOrderRepo, detailRepo repo.IOrderDetailRepo) *OrderHandler {
+func NewOrderHandler(productClient client.ProductClient, authClient client.AuthClient, repo repo.IOrderRepo, detailRepo repo.IOrderDetailRepo) *OrderHandler {
 	return &OrderHandler{
 		ProductClient: productClient,
+		AuthClient:    authClient,
 		Repo:          repo,
 		DetailRepo:    detailRepo,
 	}
 }
-func (h *OrderHandler) InitialOrder(ctx context.Context, req *pb.InitialOrderRequest) (*emptypb.Empty, error) {
 
-	return nil, status.Errorf(codes.Unimplemented, "method InitialOrder not implemented")
-}
 func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest) (*pb.CommonResponse, error) {
 	validator, err := protovalidate.New()
 	if err != nil {
@@ -41,12 +39,9 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 		violation := ErrorResponses(err)
 		return nil, invalidArgumentError(violation)
 	}
-	order, err := h.Repo.GetPendingOrder()
+	user, err := h.AuthClient.GetOneUser(req.UserId)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-
-		}
-		return nil, status.Errorf(codes.Internal, "Error while fetching pending order")
+		return nil, err
 	}
 	product, err := h.ProductClient.FindOneProduct(req.GetProductId())
 	if err != nil {
@@ -55,17 +50,96 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 	if product.Stock < req.Stock {
 		return nil, status.Errorf(codes.InvalidArgument, "Product stock is insufficient")
 	}
-	detail := model.OrderDetail{
-		OrderId:   int32(order.ID),
-		ProductId: req.ProductId,
-		Quantity:  req.GetStock(),
-		Price:     float64(product.Price),
+	order, _ := h.Repo.GetPendingOrder(user.UserId)
+	if order == nil {
+		order, err = h.Repo.CreateOrder(createPendingOrder(user.UserId))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error while creating order: %v", err)
+		}
 	}
-	err = h.DetailRepo.CreateOrderDetail(detail)
+	price := float64(product.Price * float32(req.GetStock()))
+	//check if product already in the detail of not
+	err = h.Repo.Transaction(func(repo repo.IOrderRepo) error {
+		detail, _ := h.DetailRepo.GetOrderDetailByProductId(product.GetId())
+		if detail == nil {
+			models := &model.OrderDetail{
+				OrderId:   int32(order.ID),
+				ProductId: req.ProductId,
+				Quantity:  req.GetStock(),
+				Price:     price,
+			}
+			err = h.DetailRepo.CreateOrderDetail(models)
+			if err != nil {
+				return err
+			}
+		} else {
+			detail.Price += price
+			detail.Quantity += req.GetStock()
+
+			err = h.DetailRepo.UpdateOrderDetail(detail)
+			if err != nil {
+				return err
+			}
+		}
+		order.Amount += price
+		err = h.Repo.UpdateOrder(order)
+		if err != nil {
+			return err
+		}
+		return nil
+	},
+	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error while adding product to order detail: %v", err)
+		return nil, status.Errorf(codes.Internal, "error while updating order: %v", err)
 	}
+
 	return &pb.CommonResponse{
 		Message: "add product successfully",
 	}, nil
+}
+func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailRequest) (*pb.CommonResponse, error) {
+	detail, err := h.DetailRepo.GetOrderDetailById(req.GetId())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "order detail not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error while fetching order detail: %v", err)
+	}
+	err = h.Repo.Transaction(func(repo repo.IOrderRepo) error {
+		err = h.DetailRepo.DeleteOrderDetail(detail)
+		if err != nil {
+			return err
+		}
+		order, err := h.Repo.GetPendingOrder(req.GetUserId())
+		if err != nil {
+			return err
+		}
+		order.Amount -= detail.Price
+		err = h.Repo.UpdateOrder(order)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while deleting detail: %v", err)
+	}
+
+	return &pb.CommonResponse{
+		Message: "Delete detail successfully",
+	}, nil
+}
+func (h *OrderHandler) GetUserCart(ctx context.Context, req *pb.UserCartRequest) (*pb.UserCartResponse, error) {
+	user, err := h.AuthClient.GetOneUser(req.GetUserId())
+	if err != nil {
+		return nil, err
+	}
+	order, err := h.Repo.GetPendingOrder(user.UserId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "order not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error while fetching order: %v", err)
+	}
+	return convertToCart(order), nil
 }

@@ -100,7 +100,7 @@ func (handler *Handler) GetOneUser(ctx context.Context, req *pb.GetOneUserReques
 	user, err := handler.Repo.FindOneUser(req.GetId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, status.Errorf(codes.NotFound, "user with id %s not found", req.GetId())
+			return nil, status.Errorf(codes.NotFound, "user with id %d not found", req.GetId())
 		}
 		return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
 	}

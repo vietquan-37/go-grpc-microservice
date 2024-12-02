@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
-	"log"
 )
 
 type ProductHandler struct {
@@ -29,7 +28,6 @@ func (h *ProductHandler) CreateProduct(ctx context.Context, req *pb.CreateProduc
 		panic(err)
 	}
 	if err := validator.Validate(req); err != nil {
-		log.Print(err.Error())
 		violation := ErrorResponses(err)
 		return nil, invalidArgumentError(violation)
 	}

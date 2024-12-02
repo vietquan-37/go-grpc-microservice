@@ -8,13 +8,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func ErrorResponse(field string, err error) *errdetails.BadRequest_FieldViolation {
-	return &errdetails.BadRequest_FieldViolation{
-		Field:       field,
-		Description: err.Error(),
-	}
-}
-
 func invalidArgumentError(violation []*errdetails.BadRequest_FieldViolation) error {
 	badRequest := &errdetails.BadRequest{FieldViolations: violation}
 	statusInvalid := status.New(codes.InvalidArgument, "invalid parameters")
