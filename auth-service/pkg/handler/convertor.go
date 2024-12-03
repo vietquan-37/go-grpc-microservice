@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/vietquan-37/auth-service/pkg/config"
 	"github.com/vietquan-37/auth-service/pkg/model"
 	"github.com/vietquan-37/auth-service/pkg/model/enum"
 	"github.com/vietquan-37/auth-service/pkg/pb"
@@ -25,4 +26,10 @@ func convertUserResponse(user model.User) *pb.UserResponse {
 		CreateAt:    timestamppb.New(user.CreatedAt),
 	}
 
+}
+func convertValidate(claims *config.JwtClaims) *pb.ValidateResponse {
+	return &pb.ValidateResponse{
+		UserId: int32(claims.Id),
+		Role:   string(claims.Role),
+	}
 }

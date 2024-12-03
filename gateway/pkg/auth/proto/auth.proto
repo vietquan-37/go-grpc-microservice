@@ -1,0 +1,55 @@
+syntax="proto3";
+package pb;
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+option go_package = "github.com/vietquan-37/gateway/pkg/auth/pb";
+message CreateUserRequest{
+  string user_name=1;
+  string password=2;
+  string phone_number=3;
+}
+message UserResponse{
+  int32 user_id=1;
+  string user_name=2;
+  string phone_number=3;
+  string role=4;
+  google.protobuf.Timestamp create_at=5;
+}
+message GetOneUserRequest{
+  int32 id=1;
+}
+message ValidateRequest{
+  string token=1;
+}
+message ValidateResponse{
+  int32  user_id=1;
+  string role=2;
+}
+message LoginRequest{
+  string user_name=1;
+  string password=2;
+}
+message LoginResponse{
+  string access_token=1;
+  string refresh_token=2;
+}
+service AuthService{
+  rpc Register(CreateUserRequest)returns(UserResponse){
+    option (google.api.http) = {
+      post: "/v1/create_user"
+      body: "*"
+    };
+  }
+  rpc Login(LoginRequest)returns(LoginResponse){
+    option (google.api.http) = {
+      post: "/v1/login"
+      body: "*"
+    };
+  }
+  rpc GetOneUser(GetOneUserRequest)returns(UserResponse){
+    option (google.api.http) = {
+      get: "/v1/user/{id}"
+    };
+  }
+  rpc Validate(ValidateRequest)returns(ValidateResponse){}
+}

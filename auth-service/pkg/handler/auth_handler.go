@@ -107,3 +107,10 @@ func (handler *Handler) GetOneUser(ctx context.Context, req *pb.GetOneUserReques
 	rsp := convertUserResponse(*user)
 	return rsp, nil
 }
+func (handler *Handler) Validate(ctx context.Context, req *pb.ValidateRequest) (*pb.ValidateResponse, error) {
+	claims, err := handler.Jwt.ValidateToken(req.GetToken())
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, err.Error())
+	}
+	return convertValidate(claims), status.Errorf(codes.Unimplemented, "method Validate not implemented")
+}

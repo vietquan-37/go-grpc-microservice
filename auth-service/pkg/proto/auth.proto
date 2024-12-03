@@ -18,7 +18,13 @@ message UserResponse{
 message GetOneUserRequest{
     int32 id=1;
 }
-
+message ValidateRequest{
+    string token=1;
+}
+message ValidateResponse{
+    int32  user_id=1;
+    string role=2;
+}
 message LoginRequest{
     string user_name=1[(buf.validate.field).string.email = true];
     string password=2[(buf.validate.field).string.min_len = 3 ,(buf.validate.field).string.max_len = 16];
@@ -31,4 +37,5 @@ service AuthService{
     rpc Register(CreateUserRequest)returns(UserResponse){}
     rpc Login(LoginRequest)returns(LoginResponse){}
     rpc GetOneUser(GetOneUserRequest)returns(UserResponse){}
+    rpc Validate(ValidateRequest)returns(ValidateResponse){}
 }
