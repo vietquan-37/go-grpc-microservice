@@ -2,6 +2,8 @@ syntax="proto3";
 package pb;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
+import "google/rpc/status.proto";
+import "google/rpc/error_details.proto";
 option go_package = "github.com/vietquan-37/gateway/pkg/auth/pb";
 message CreateUserRequest{
   string user_name=1;

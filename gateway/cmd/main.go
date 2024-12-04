@@ -9,6 +9,7 @@ import (
 	"github.com/vietquan-37/gateway/pkg/order/pb"
 	"github.com/vietquan-37/gateway/pkg/product"
 	productpb "github.com/vietquan-37/gateway/pkg/product/pb"
+	"google.golang.org/protobuf/encoding/protojson"
 	"log"
 	"net/http"
 
@@ -23,7 +24,16 @@ func main() {
 	authClient := auth.InitAuthClient(c.AuthUrl)
 	productClient := product.InitProductClient(c.ProductUrl)
 	orderClient := order.InitOrderClient(c.OrderUrl)
-	mux := runtime.NewServeMux()
+	jsonOption := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+		MarshalOptions: protojson.MarshalOptions{
+			UseProtoNames: true,
+		},
+		UnmarshalOptions: protojson.UnmarshalOptions{
+			DiscardUnknown: true,
+		},
+	})
+
+	mux := runtime.NewServeMux(jsonOption)
 	if err = authpb.RegisterAuthServiceHandlerClient(context.Background(), mux, authClient.Client); err != nil {
 		log.Fatalf("fail to register auth client: %v", err)
 	}

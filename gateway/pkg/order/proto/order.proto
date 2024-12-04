@@ -1,7 +1,8 @@
 syntax="proto3";
-package orderpb; // Thay đổi package thành orderpb
+package orderpb;
 option go_package="github.com/vietquan-37/gateway/pkg/order/pb";
-
+import "google/rpc/status.proto";
+import "google/rpc/error_details.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 

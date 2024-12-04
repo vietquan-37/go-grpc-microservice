@@ -1,6 +1,7 @@
 syntax = "proto3";
 package productpb;
-
+import "google/rpc/status.proto";
+import "google/rpc/error_details.proto";
 import "google/protobuf/empty.proto";
 option go_package = "github.com/vietquan-37/gateway/pkg/product/pb";
 import "google/api/annotations.proto";
