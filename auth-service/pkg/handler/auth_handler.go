@@ -112,5 +112,5 @@ func (handler *Handler) Validate(ctx context.Context, req *pb.ValidateRequest) (
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
-	return convertValidate(claims), status.Errorf(codes.Unimplemented, "method Validate not implemented")
+	return convertValidate(claims), nil
 }

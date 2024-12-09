@@ -15,7 +15,7 @@ var ErrExpiredToken = errors.New("expired token")
 type JwtWrapper struct {
 	JwtSecret []byte
 }
-type JwtClaims struct {
+type JwtClaim struct {
 	jwt.StandardClaims
 	Id    int32
 	Role  string
@@ -32,7 +32,7 @@ func NewJwtWrapper(secret string) (*JwtWrapper, error) {
 }
 func (wrapper *JwtWrapper) GenerateJWT(user *model.User, expiration time.Duration) (tokenString string, err error) {
 	expirationTime := time.Now().Add(expiration)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, JwtClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, JwtClaim{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
@@ -46,8 +46,8 @@ func (wrapper *JwtWrapper) GenerateJWT(user *model.User, expiration time.Duratio
 	}
 	return signed, nil
 }
-func (wrapper *JwtWrapper) ValidateToken(token string) (claims *JwtClaims, err error) {
-	t, err := jwt.ParseWithClaims(token, &JwtClaims{}, func(token *jwt.Token) (interface{}, error) {
+func (wrapper *JwtWrapper) ValidateToken(token string) (claims *JwtClaim, err error) {
+	t, err := jwt.ParseWithClaims(token, &JwtClaim{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -56,7 +56,7 @@ func (wrapper *JwtWrapper) ValidateToken(token string) (claims *JwtClaims, err e
 	if err != nil {
 		return nil, errors.Join(ErrInvalidToken, err)
 	}
-	claims, ok := t.Claims.(*JwtClaims)
+	claims, ok := t.Claims.(*JwtClaim)
 	if !ok {
 		return nil, errors.New("could not parse claims")
 	}

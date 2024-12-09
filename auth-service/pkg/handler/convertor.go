@@ -27,9 +27,9 @@ func convertUserResponse(user model.User) *pb.UserResponse {
 	}
 
 }
-func convertValidate(claims *config.JwtClaims) *pb.ValidateResponse {
+func convertValidate(claims *config.JwtClaim) *pb.ValidateResponse {
 	return &pb.ValidateResponse{
-		UserId: int32(claims.Id),
-		Role:   string(claims.Role),
+		UserId: claims.Id,
+		Role:   claims.Role,
 	}
 }
