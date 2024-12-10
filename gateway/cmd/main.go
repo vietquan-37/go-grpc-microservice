@@ -10,6 +10,7 @@ import (
 	"github.com/vietquan-37/gateway/pkg/order/pb"
 	"github.com/vietquan-37/gateway/pkg/product"
 	productpb "github.com/vietquan-37/gateway/pkg/product/pb"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"log"
 	"net"
@@ -19,7 +20,7 @@ import (
 )
 
 func main() {
-	c, err := config.LoadConfig("../")
+	c, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("fail to load config: %v", err)
 	}
@@ -35,7 +36,14 @@ func main() {
 		},
 	})
 
-	mux := runtime.NewServeMux(jsonOption)
+	mux := runtime.NewServeMux(
+		runtime.WithMetadata(func(ctx context.Context, r *http.Request) metadata.MD {
+			md, _ := metadata.FromOutgoingContext(ctx)
+			log.Printf("Gateway - Passing metadata: %v", md)
+			return md
+		}), jsonOption,
+	)
+
 	if err = authpb.RegisterAuthServiceHandlerClient(context.Background(), mux, authClient.Client); err != nil {
 		log.Fatalf("fail to register auth client: %v", err)
 	}

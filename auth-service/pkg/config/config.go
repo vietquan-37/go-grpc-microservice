@@ -1,24 +1,29 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"errors"
+	"os"
+)
 
 type Config struct {
-	DbSource          string `mapstructure:"DB_SOURCE"`
-	GrpcServerAddress string `mapstructure:"GRPC_SERVER_ADDRESS"`
-	JwtSecret         string `mapstructure:"JWT_SECRET"`
-	AdminUserName     string `mapstructure:"ADMIN_USERNAME"`
-	AdminPassword     string `mapstructure:"ADMIN_PASSWORD"`
+	DbSource          string
+	GrpcServerAddress string
+	JwtSecret         string
+	AdminUserName     string
+	AdminPassword     string
 }
 
-func LoadConfig(path string) (config Config, err error) {
-	viper.AddConfigPath(path)
-	viper.SetConfigName("app")
-	viper.SetConfigType("env")
-	viper.AutomaticEnv()
-	err = viper.ReadInConfig()
-	if err != nil {
-		return
+func LoadConfig() (*Config, error) {
+	config := &Config{
+		DbSource:          os.Getenv("DB_SOURCE"),
+		GrpcServerAddress: os.Getenv("GRPC_SERVER_ADDRESS"),
+		JwtSecret:         os.Getenv("JWT_SECRET"),
+		AdminUserName:     os.Getenv("ADMIN_USERNAME"),
+		AdminPassword:     os.Getenv("ADMIN_PASSWORD"),
 	}
-	err = viper.Unmarshal(&config)
-	return
+
+	if config.DbSource == "" || config.GrpcServerAddress == "" || config.JwtSecret == "" || config.AdminUserName == "" || config.AdminPassword == "" {
+		return nil, errors.New("missing env variable")
+	}
+	return config, nil
 }

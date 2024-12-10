@@ -1,27 +1,29 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"errors"
+	"os"
+)
 
 type Config struct {
-	DbSource          string `mapstructure:"DB_SOURCE"`
-	GrpcServerAddress string `mapstructure:"GRPC_SERVER_ADDRESS"`
-	ProductURL        string `mapstructure:"PRODUCT_URL"`
-	AuthURL           string `mapstructure:"AUTH_URL"`
+	DbSource          string
+	GrpcServerAddress string
+	ProductURL        string
+	AuthURL           string
 }
 
-func LoadConfig(path string) (config *Config, err error) {
-	viper.AddConfigPath(path)
-	viper.SetConfigName("app")
-	viper.SetConfigType("env")
-	viper.AutomaticEnv()
-	err = viper.ReadInConfig()
-	if err != nil {
-		return
+func LoadConfig() (*Config, error) {
+	config := &Config{
+		DbSource:          os.Getenv("DB_SOURCE"),
+		GrpcServerAddress: os.Getenv("GRPC_SERVER_ADDRESS"),
+		ProductURL:        os.Getenv("PRODUCT_URL"),
+		AuthURL:           os.Getenv("AUTH_URL"),
 	}
-	err = viper.Unmarshal(&config)
-	if err != nil {
-		return
+
+	if config.DbSource == "" || config.GrpcServerAddress == "" || config.ProductURL == "" || config.AuthURL == "" {
+		return nil, errors.New(config.DbSource)
 	}
-	return
+
+	return config, nil
 
 }

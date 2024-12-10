@@ -39,7 +39,11 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 		violation := ErrorResponses(err)
 		return nil, invalidArgumentError(violation)
 	}
-	user, err := h.AuthClient.GetOneUser(req.UserId)
+	userID, _, err := extractUserMetadata(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to extract user metadata: %v", err)
+	}
+	user, err := h.AuthClient.GetOneUser(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +62,7 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 		}
 	}
 	price := float64(product.Price * float32(req.GetStock()))
-	//check if product already in the detail of not
+
 	err = h.Repo.Transaction(func(repo repo.IOrderRepo) error {
 		detail, _ := h.DetailRepo.GetOrderDetailByProductId(product.GetId())
 		if detail == nil {
@@ -98,6 +102,10 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 	}, nil
 }
 func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailRequest) (*pb.CommonResponse, error) {
+	userID, _, err := extractUserMetadata(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to extract user metadata: %v", err)
+	}
 	detail, err := h.DetailRepo.GetOrderDetailById(req.GetId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -110,7 +118,7 @@ func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailReq
 		if err != nil {
 			return err
 		}
-		order, err := h.Repo.GetPendingOrder(req.GetUserId())
+		order, err := h.Repo.GetPendingOrder(userID)
 		if err != nil {
 			return err
 		}
@@ -130,7 +138,11 @@ func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailReq
 	}, nil
 }
 func (h *OrderHandler) GetUserCart(ctx context.Context, req *pb.UserCartRequest) (*pb.UserCartResponse, error) {
-	user, err := h.AuthClient.GetOneUser(req.GetUserId())
+	userID, _, err := extractUserMetadata(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to extract user metadata: %v", err)
+	}
+	user, err := h.AuthClient.GetOneUser(userID)
 	if err != nil {
 		return nil, err
 	}

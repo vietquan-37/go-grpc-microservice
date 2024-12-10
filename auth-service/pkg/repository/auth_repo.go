@@ -16,7 +16,7 @@ type AuthRepo struct {
 
 func NewAuthRepo(db *gorm.DB) IAuthRepo {
 	repo := &AuthRepo{DB: db}
-	c, err := config.LoadConfig("./")
+	c, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("fail to load from config: %v", err)
 	}
@@ -29,14 +29,14 @@ func NewAuthRepo(db *gorm.DB) IAuthRepo {
 		if err != nil {
 			log.Fatalf("fail to hash password: %v", err)
 		}
-		model := &model.User{
+		m := &model.User{
 
 			Username:    c.AdminUserName,
 			Password:    hashPassword,
 			PhoneNumber: "0912021638",
 			Role:        enum.AdminRole,
 		}
-		_, err = repo.CreateUser(model)
+		_, err = repo.CreateUser(m)
 		if err != nil {
 			log.Fatalf("fail to create admin user: %v", err)
 		}

@@ -1,21 +1,24 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"errors"
+	"os"
+)
 
 type Config struct {
-	DbSource string `mapstructure:"DB_SOURCE"`
-	GrpcAddr string `mapstructure:"GRPC_SERVER_ADDRESS"`
+	DbSource string
+	GrpcAddr string
 }
 
-func LoadConfig(path string) (config Config, err error) {
-	viper.AddConfigPath(path)
-	viper.SetConfigName("app")
-	viper.SetConfigType("env")
-	viper.AutomaticEnv()
-	err = viper.ReadInConfig()
-	if err != nil {
-		return
+func LoadConfig() (*Config, error) {
+	config := &Config{
+		DbSource: os.Getenv("DB_SOURCE"),
+		GrpcAddr: os.Getenv("GRPC_SERVER_ADDRESS"),
 	}
-	err = viper.Unmarshal(&config)
-	return
+
+	if config.DbSource == "" || config.GrpcAddr == "" {
+		return nil, errors.New("missing env variables")
+	}
+
+	return config, nil
 }

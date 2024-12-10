@@ -89,6 +89,7 @@ func (handler *Handler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Lo
 	return rsp, nil
 }
 func (handler *Handler) GetOneUser(ctx context.Context, req *pb.GetOneUserRequest) (*pb.UserResponse, error) {
+
 	validator, err := protovalidate.New()
 	if err != nil {
 		panic(err)
@@ -97,6 +98,7 @@ func (handler *Handler) GetOneUser(ctx context.Context, req *pb.GetOneUserReques
 		violation := ErrorResponses(err)
 		return nil, invalidArgumentError(violation)
 	}
+
 	user, err := handler.Repo.FindOneUser(req.GetId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

@@ -1,0 +1,91 @@
+version: "3.9"
+services:
+  api-gateway:
+    image: vietquandeptrai/api-gateway
+    ports:
+      - "6969:6969"
+    environment:
+      - GATEWAY_PORT=:6969
+      - AUTH_URL=auth-svc:5051
+      - PRODUCT_URL=product-svc:5052
+      - ORDER_URL=order-svc:5054
+    restart: always
+    depends_on:
+      - auth-svc
+      - product-svc
+      - order-svc
+
+  product-svc:
+    image: vietquandeptrai/product-svc
+    ports:
+      - "5052:5052"
+    environment:
+      - DB_SOURCE=postgresql://postgres:12345@product-db:5432/product_db?sslmode=disable
+      - GRPC_SERVER_ADDRESS=:5052
+    restart: always
+    depends_on:
+      - product-db
+  order-svc:
+    image: vietquandeptrai/order-svc
+    ports:
+      - "5054:5054"
+    environment:
+      - DB_SOURCE=postgresql://postgres:12345@order-db:5432/order_db?sslmode=disable
+      - GRPC_SERVER_ADDRESS=:5054
+      - PRODUCT_URL=product-svc:5052
+      - AUTH_URL=auth-svc:5051
+    depends_on:
+      - auth-svc
+      - product-svc
+      - order-db
+    restart: always
+  auth-svc:
+    image: vietquandeptrai/auth-svc
+    ports:
+      - "5051:5051"
+    environment:
+      - DB_SOURCE=postgresql://postgres:12345@auth-db:5432/auth_db?sslmode=disable
+      - GRPC_SERVER_ADDRESS=:5051
+      - JWT_SECRET=dmlldHF1YW5kZXB0cmFp
+      - ADMIN_USERNAME=bubakush20099@gmail.com
+      - ADMIN_PASSWORD=123
+    restart: always
+    depends_on:
+      - auth-db
+  auth-db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=auth_db
+    ports:
+      - "5431:5432"
+    volumes:
+      - auth-data:/var/lib/postgresql/data
+  product-db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=product_db
+    ports:
+      - "5430:5432"
+    volumes:
+      - product-data:/var/lib/postgresql/data
+
+  order-db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=order_db
+    ports:
+      - "5429:5432"
+    volumes:
+      - order-data:/var/lib/postgresql/data
+
+
+volumes:
+  auth-data:
+  product-data:
+  order-data:
