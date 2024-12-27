@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/vietquan-37/order-service/pkg/client"
 	"github.com/vietquan-37/order-service/pkg/model"
 	"github.com/vietquan-37/order-service/pkg/pb"
@@ -18,27 +17,18 @@ type OrderHandler struct {
 	ProductClient client.ProductClient
 	AuthClient    client.AuthClient
 	Repo          repo.IOrderRepo
-	DetailRepo    repo.IOrderDetailRepo
 }
 
-func NewOrderHandler(productClient client.ProductClient, authClient client.AuthClient, repo repo.IOrderRepo, detailRepo repo.IOrderDetailRepo) *OrderHandler {
+func NewOrderHandler(productClient client.ProductClient, authClient client.AuthClient, repo repo.IOrderRepo) *OrderHandler {
 	return &OrderHandler{
 		ProductClient: productClient,
 		AuthClient:    authClient,
 		Repo:          repo,
-		DetailRepo:    detailRepo,
 	}
 }
 
 func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest) (*pb.CommonResponse, error) {
-	validator, err := protovalidate.New()
-	if err != nil {
-		panic(err)
-	}
-	if err := validator.Validate(req); err != nil {
-		violation := ErrorResponses(err)
-		return nil, invalidArgumentError(violation)
-	}
+
 	userID, _, err := extractUserMetadata(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to extract user metadata: %v", err)
@@ -47,7 +37,7 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 	if err != nil {
 		return nil, err
 	}
-	product, err := h.ProductClient.FindOneProduct(req.GetProductId())
+	product, err := h.ProductClient.FindOneProduct(ctx, req.GetProductId())
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +52,8 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 		}
 	}
 	price := float64(product.Price * float32(req.GetStock()))
-
+	detail, _ := h.Repo.GetOrderDetailByProductId(product.GetId())
 	err = h.Repo.Transaction(func(repo repo.IOrderRepo) error {
-		detail, _ := h.DetailRepo.GetOrderDetailByProductId(product.GetId())
 		if detail == nil {
 			models := &model.OrderDetail{
 				OrderId:   int32(order.ID),
@@ -72,7 +61,7 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 				Quantity:  req.GetStock(),
 				Price:     price,
 			}
-			err = h.DetailRepo.CreateOrderDetail(models)
+			err = repo.CreateOrderDetail(models)
 			if err != nil {
 				return err
 			}
@@ -80,13 +69,14 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 			detail.Price += price
 			detail.Quantity += req.GetStock()
 
-			err = h.DetailRepo.UpdateOrderDetail(detail)
+			err = repo.UpdateOrderDetail(detail)
 			if err != nil {
 				return err
 			}
 		}
 		order.Amount += price
-		err = h.Repo.UpdateOrder(order)
+		//rollback
+		err = repo.UpdateOrder(order)
 		if err != nil {
 			return err
 		}
@@ -106,7 +96,7 @@ func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailReq
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to extract user metadata: %v", err)
 	}
-	detail, err := h.DetailRepo.GetOrderDetailById(req.GetId())
+	detail, err := h.Repo.GetOrderDetailById(req.GetId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Error(codes.NotFound, "order detail not found")
@@ -114,7 +104,7 @@ func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailReq
 		return nil, status.Errorf(codes.Internal, "error while fetching order detail: %v", err)
 	}
 	err = h.Repo.Transaction(func(repo repo.IOrderRepo) error {
-		err = h.DetailRepo.DeleteOrderDetail(detail)
+		err = repo.DeleteOrderDetail(detail)
 		if err != nil {
 			return err
 		}

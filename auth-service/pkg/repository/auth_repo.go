@@ -2,7 +2,7 @@ package repository
 
 import (
 	"errors"
-	"log"
+	"github.com/rs/zerolog/log"
 
 	"github.com/vietquan-37/auth-service/pkg/config"
 	"github.com/vietquan-37/auth-service/pkg/model"
@@ -18,16 +18,16 @@ func NewAuthRepo(db *gorm.DB) IAuthRepo {
 	repo := &AuthRepo{DB: db}
 	c, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("fail to load from config: %v", err)
+		log.Fatal().Err(err).Msg("failed to load config file: ")
 	}
 	user, err := repo.GetUserByUserName(c.AdminUserName)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Fatalf("error while checking user: %v", err)
+		log.Fatal().Err(err).Msg("error while checking user:")
 	}
 	if user == nil {
 		hashPassword, err := config.HashedPassword(c.AdminPassword)
 		if err != nil {
-			log.Fatalf("fail to hash password: %v", err)
+			log.Fatal().Err(err).Msg("fail to hash password:")
 		}
 		m := &model.User{
 
@@ -38,7 +38,7 @@ func NewAuthRepo(db *gorm.DB) IAuthRepo {
 		}
 		_, err = repo.CreateUser(m)
 		if err != nil {
-			log.Fatalf("fail to create admin user: %v", err)
+			log.Fatal().Err(err).Msg("fail to create admin user: ")
 		}
 	}
 	return repo

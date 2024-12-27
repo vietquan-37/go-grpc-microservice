@@ -1,17 +1,47 @@
-package handler
+package interceptor
 
 import (
+	"context"
 	"errors"
 	"github.com/bufbuild/protovalidate-go"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/protobuf/proto"
+
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func ErrorResponse(field string, err error) *errdetails.BadRequest_FieldViolation {
-	return &errdetails.BadRequest_FieldViolation{
-		Field:       field,
-		Description: err.Error(),
+type ValidationInterceptor struct {
+	validator *protovalidate.Validator
+}
+
+func NewValidationInterceptor() (*ValidationInterceptor, error) {
+	validator, err := protovalidate.New()
+	if err != nil {
+		return nil, err
+	}
+
+	return &ValidationInterceptor{validator: validator}, nil
+}
+
+func (v *ValidationInterceptor) ValidateInterceptor() grpc.UnaryServerInterceptor {
+	return func(
+		ctx context.Context,
+		req interface{},
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (interface{}, error) {
+		message, ok := req.(proto.Message)
+		if !ok {
+			return nil, status.Errorf(codes.Internal, "invalid request type: not a proto.Message")
+		}
+		if err := v.validator.Validate(message); err != nil {
+			violation := ErrorResponses(err)
+			return nil, invalidArgumentError(violation)
+		}
+
+		return handler(ctx, req)
 	}
 }
 

@@ -1,4 +1,4 @@
-version: "3.9"
+version: '3.9'
 services:
   api-gateway:
     image: vietquandeptrai/api-gateway
@@ -89,3 +89,4 @@ volumes:
   auth-data:
   product-data:
   order-data:
+

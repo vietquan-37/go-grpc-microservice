@@ -1,10 +1,10 @@
 package db
 
 import (
+	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/product-service/pkg/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 func DbConn(DbSource string) *gorm.DB {
@@ -13,10 +13,10 @@ func DbConn(DbSource string) *gorm.DB {
 	)
 	err = db.AutoMigrate(model.Product{})
 	if err != nil {
-		log.Fatalf("err while migrating model %v", err)
+		log.Fatal().Err(err).Msg("fail to migrate model:")
 	}
 	if err != nil {
-		log.Fatalf("database connection error:%s", err)
+		log.Fatal().Err(err).Msg("fail to open database connection:")
 		return nil
 	}
 	return db

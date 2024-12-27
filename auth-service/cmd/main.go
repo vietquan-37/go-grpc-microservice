@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"common/interceptor"
+	"github.com/rs/zerolog/log"
 	"net"
 
 	"github.com/vietquan-37/auth-service/pkg/config"
@@ -18,25 +18,33 @@ import (
 func main() {
 	c, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("error while loading config: %v", err)
+		log.Fatal().Err(err).Msg("failed to load config file: ")
 	}
 	d := db.DbConn(c.DbSource)
 	lis, err := net.Listen("tcp", c.GrpcServerAddress)
 	if err != nil {
-		log.Fatalf("ERROR STARTING THE SERVER: %v", err)
+		log.Fatal().Err(err).Msg("failed to listen: ")
 	}
 	repo := initAuthRepo(d)
 	jwtMaker, err := config.NewJwtWrapper(c.JwtSecret)
 	if err != nil {
-		log.Fatalf("error while creating jwt: %v", err)
+		log.Fatal().Err(err).Msg("failed to load jwt secret: ")
+	}
+	validateInterceptor, err := interceptor.NewValidationInterceptor()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to create interceptor: ")
 	}
 	h := handler.NewAuthHandler(*jwtMaker, repo)
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			interceptor.GrpcLoggerInterceptor,
+			validateInterceptor.ValidateInterceptor(),
+		))
 	pb.RegisterAuthServiceServer(grpcServer, h)
 	reflection.Register(grpcServer)
-	fmt.Println("Server is listening on port 5051...")
+	log.Info().Msgf("start  gRPC server server at %s", lis.Addr().String())
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+		log.Fatal().Err(err).Msg("failed to serve: ")
 	}
 }
 func initAuthRepo(db *gorm.DB) repository.IAuthRepo {

@@ -41,7 +41,46 @@ func (r *OrderRepo) GetOrderById(orderId int32) (order *model.Order, err error) 
 	if err != nil {
 		return nil, err
 	}
+
 	return order, nil
+
+}
+func (r *OrderRepo) CreateOrderDetail(detail *model.OrderDetail) (error error) {
+	err := r.DB.Create(&detail).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (r *OrderRepo) GetOrderDetailByProductId(productId int32) (*model.OrderDetail, error) {
+	var orderDetail model.OrderDetail
+	err := r.DB.Where("product_id = ?", productId).First(&orderDetail).Error
+	if err != nil {
+		return nil, err
+	}
+	return &orderDetail, nil
+}
+func (r *OrderRepo) DeleteOrderDetail(model *model.OrderDetail) (err error) {
+
+	err = r.DB.Unscoped().Delete(&model).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (r *OrderRepo) GetOrderDetailById(Id int32) (orderDetail *model.OrderDetail, err error) {
+	err = r.DB.Where("id = ?", Id).Model(&orderDetail).First(&orderDetail).Error
+	if err != nil {
+		return nil, err
+	}
+	return orderDetail, nil
+}
+func (r *OrderRepo) UpdateOrderDetail(detail *model.OrderDetail) (err error) {
+	err = r.DB.Save(&detail).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 func (r *OrderRepo) Transaction(fn func(repo IOrderRepo) error) error {
 	tx := r.DB.Begin()

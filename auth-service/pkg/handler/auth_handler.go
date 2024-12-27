@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/vietquan-37/auth-service/pkg/config"
 	"github.com/vietquan-37/auth-service/pkg/pb"
 	"github.com/vietquan-37/auth-service/pkg/repository"
@@ -26,14 +25,7 @@ func NewAuthHandler(jwt config.JwtWrapper, repo repository.IAuthRepo) *Handler {
 	}
 }
 func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest) (*pb.UserResponse, error) {
-	validator, err := protovalidate.New()
-	if err != nil {
-		panic(err)
-	}
-	if err := validator.Validate(req); err != nil {
-		violation := ErrorResponses(err)
-		return nil, invalidArgumentError(violation)
-	}
+
 	hashPassword, err := config.HashedPassword(req.Password)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error while hashing password: %s", err)
@@ -52,14 +44,7 @@ func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest)
 	return convertUserResponse(*user), nil
 }
 func (handler *Handler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	validator, err := protovalidate.New()
-	if err != nil {
-		panic(err)
-	}
-	if err := validator.Validate(req); err != nil {
-		violation := ErrorResponses(err)
-		return nil, invalidArgumentError(violation)
-	}
+
 	user, err := handler.Repo.GetUserByUserName(req.GetUserName())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -89,15 +74,6 @@ func (handler *Handler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Lo
 	return rsp, nil
 }
 func (handler *Handler) GetOneUser(ctx context.Context, req *pb.GetOneUserRequest) (*pb.UserResponse, error) {
-
-	validator, err := protovalidate.New()
-	if err != nil {
-		panic(err)
-	}
-	if err := validator.Validate(req); err != nil {
-		violation := ErrorResponses(err)
-		return nil, invalidArgumentError(violation)
-	}
 
 	user, err := handler.Repo.FindOneUser(req.GetId())
 	if err != nil {

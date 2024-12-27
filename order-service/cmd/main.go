@@ -1,11 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"common/interceptor"
+
 	"github.com/vietquan-37/order-service/pkg/client"
 	"github.com/vietquan-37/order-service/pkg/pb"
 	"github.com/vietquan-37/order-service/pkg/repo"
 
+	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/order-service/pkg/handler"
 
 	"github.com/vietquan-37/order-service/pkg/config"
@@ -13,36 +15,42 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"gorm.io/gorm"
-	"log"
+
 	"net"
 )
 
 func main() {
+
 	c, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("error while loading config: %v", err)
+		log.Fatal().Err(err).Msg("cannot load from config:")
 	}
 	d := db.DbConn(c.DbSource)
 	lis, err := net.Listen("tcp", c.GrpcServerAddress)
 	if err != nil {
-		log.Fatalf("ERROR STARTING THE SERVER: %v", err)
+		log.Fatal().Err(err).Msg("cannot start to server:")
 	}
 	orderRepo := InitOrderRepo(d)
-	detailRepo := InitOrderDetailRepo(d)
 	productClient := client.InitProductClient(c.ProductURL)
 	authClient := client.InitAuthClient(c.AuthURL)
-	h := handler.NewOrderHandler(productClient, authClient, orderRepo, detailRepo)
-	grpcServer := grpc.NewServer()
+	h := handler.NewOrderHandler(productClient, authClient, orderRepo)
+	validateInterceptor, err := interceptor.NewValidationInterceptor()
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot create validator interceptor:")
+	}
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			interceptor.GrpcLoggerInterceptor,
+			validateInterceptor.ValidateInterceptor(),
+		),
+	)
 	pb.RegisterOrderServiceServer(grpcServer, h)
 	reflection.Register(grpcServer)
-	fmt.Println("Server is listening on port 5054")
+	log.Info().Msgf("start  gRPC server server at %s", lis.Addr().String())
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+		log.Fatal().Err(err).Msg("fail to serve server:")
 	}
 }
 func InitOrderRepo(db *gorm.DB) repo.IOrderRepo {
 	return repo.NewOrderRepo(db)
-}
-func InitOrderDetailRepo(db *gorm.DB) repo.IOrderDetailRepo {
-	return repo.NewOrderDetailRepo(db)
 }

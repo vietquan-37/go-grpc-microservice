@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/vietquan-37/product-service/pkg/pb"
 	"github.com/vietquan-37/product-service/pkg/repo"
 	"google.golang.org/grpc/codes"
@@ -23,14 +22,7 @@ func NewProductHandler(repo repo.IProductRepo) *ProductHandler {
 	}
 }
 func (h *ProductHandler) CreateProduct(ctx context.Context, req *pb.CreateProductRequest) (*pb.ProductResponse, error) {
-	validator, err := protovalidate.New()
-	if err != nil {
-		panic(err)
-	}
-	if err := validator.Validate(req); err != nil {
-		violation := ErrorResponses(err)
-		return nil, invalidArgumentError(violation)
-	}
+
 	model := convertToProduct(req)
 	product, err := h.Repo.CreateProduct(model)
 	if err != nil {
@@ -40,14 +32,6 @@ func (h *ProductHandler) CreateProduct(ctx context.Context, req *pb.CreateProduc
 	return rsp, nil
 }
 func (h *ProductHandler) UpdateProduct(ctx context.Context, req *pb.UpdateProductRequest) (*pb.ProductResponse, error) {
-	validator, err := protovalidate.New()
-	if err != nil {
-		panic(err)
-	}
-	if err := validator.Validate(req); err != nil {
-		violation := ErrorResponses(err)
-		return nil, invalidArgumentError(violation)
-	}
 	product, err := h.Repo.FindProduct(req.GetId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -65,14 +49,6 @@ func (h *ProductHandler) UpdateProduct(ctx context.Context, req *pb.UpdateProduc
 	return rsp, nil
 }
 func (h *ProductHandler) DecreaseProductStock(ctx context.Context, req *pb.DecreaseStockRequest) (*pb.CommonResponse, error) {
-	validator, err := protovalidate.New()
-	if err != nil {
-		panic(err)
-	}
-	if err := validator.Validate(req); err != nil {
-		violation := ErrorResponses(err)
-		return nil, invalidArgumentError(violation)
-	}
 	product, err := h.Repo.FindProduct(req.GetProductId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

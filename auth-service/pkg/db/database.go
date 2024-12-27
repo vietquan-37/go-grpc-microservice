@@ -1,7 +1,7 @@
 package db
 
 import (
-	"log"
+	"github.com/rs/zerolog/log"
 
 	"github.com/vietquan-37/auth-service/pkg/model"
 	"gorm.io/driver/postgres"
@@ -13,11 +13,11 @@ func DbConn(DbSource string) *gorm.DB {
 		postgres.Open(DbSource), &gorm.Config{TranslateError: true},
 	)
 	if err != nil {
-		log.Fatalf("fail to connect to db: %v", err)
+		log.Fatal().Err(err).Msg("failed to load config file: ")
 	}
 	err = db.AutoMigrate(&model.User{})
 	if err != nil {
-		log.Fatalf("error while migrating user:%v", err)
+		log.Fatal().Err(err).Msg("failed to load config file: ")
 
 		return nil
 	}

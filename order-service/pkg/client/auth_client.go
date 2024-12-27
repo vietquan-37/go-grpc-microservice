@@ -13,17 +13,17 @@ type AuthClient struct {
 }
 
 func InitAuthClient(url string) AuthClient {
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	conn, err := grpc.NewClient(url, opts...)
+	// Use grpc.Dial to create a connection
+	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		fmt.Printf("Cannot connect to user client: %v", err)
+		fmt.Printf("Cannot connect to Auth service: %v\n", err)
+		return AuthClient{}
 	}
-	a := AuthClient{
+	return AuthClient{
 		AuthClient: pb.NewAuthServiceClient(conn),
 	}
-	return a
 }
+
 func (a *AuthClient) GetOneUser(id int32) (*pb.UserResponse, error) {
 	req := &pb.GetOneUserRequest{
 		Id: id,

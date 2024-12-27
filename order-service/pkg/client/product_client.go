@@ -25,9 +25,10 @@ func InitProductClient(url string) ProductClient {
 	}
 	return c
 }
-func (c *ProductClient) FindOneProduct(productId int32) (*pb.ProductResponse, error) {
+func (c *ProductClient) FindOneProduct(ctx context.Context, productId int32) (*pb.ProductResponse, error) {
 	req := &pb.ProductRequest{
 		Id: productId,
 	}
-	return c.Client.FindOneProduct(context.Background(), req)
+
+	return c.Client.FindOneProduct(ctx, req)
 }
