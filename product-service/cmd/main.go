@@ -1,7 +1,8 @@
 package main
 
 import (
-	"common/interceptor"
+	"common/loggers"
+	"common/validate"
 	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/product-service/pkg/config"
 	"github.com/vietquan-37/product-service/pkg/db"
@@ -16,7 +17,7 @@ import (
 )
 
 func main() {
-	c, err := config.LoadConfig()
+	c, err := config.LoadConfig("./")
 	if err != nil {
 
 		log.Fatal().Err(err).Msg("fail to load config file:")
@@ -28,18 +29,19 @@ func main() {
 	}
 	r := NewRepoInit(d)
 	h := handler.NewProductHandler(r)
-	validateInterceptor, err := interceptor.NewValidationInterceptor()
+	validateInterceptor, err := validate.NewValidationInterceptor()
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create validator interceptor:")
 	}
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			interceptor.GrpcLoggerInterceptor,
+			loggers.GrpcLoggerInterceptor,
 			validateInterceptor.ValidateInterceptor(),
 		),
 	)
 	pb.RegisterProductServiceServer(grpcServer, h)
 	reflection.Register(grpcServer)
+	log.Info().Msgf("start  gRPC server server at %s", lis.Addr().String())
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal().Err(err).Msg("fail to serve  server:")
 	}

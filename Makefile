@@ -1,4 +1,4 @@
-PHONY: run-all  buf
+HONY: run-all  buf
 run-all:
 
 	cd auth-service && start /b make run-server

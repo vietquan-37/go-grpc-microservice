@@ -1,4 +1,4 @@
-package interceptor
+package loggers
 
 import (
 	"context"
@@ -32,7 +32,7 @@ func GrpcLoggerInterceptor(
 	}
 	//clientIp, err := extractUserIp(ctx)
 	//if err != nil {
-	//	logger = log.Error().Err(err)
+	//	loggers = log.Error().Err(err)
 	//}
 	logger.
 		Str("protocol", "grpc").

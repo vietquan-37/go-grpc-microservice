@@ -41,7 +41,7 @@ func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest)
 		return nil, status.Errorf(codes.Internal, "error while creating user: %s", err)
 	}
 
-	return convertUserResponse(*user), nil
+	return convertUserResponse(user), nil
 }
 func (handler *Handler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 
@@ -82,7 +82,7 @@ func (handler *Handler) GetOneUser(ctx context.Context, req *pb.GetOneUserReques
 		}
 		return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
 	}
-	rsp := convertUserResponse(*user)
+	rsp := convertUserResponse(user)
 	return rsp, nil
 }
 func (handler *Handler) Validate(ctx context.Context, req *pb.ValidateRequest) (*pb.ValidateResponse, error) {
@@ -90,5 +90,12 @@ func (handler *Handler) Validate(ctx context.Context, req *pb.ValidateRequest) (
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
-	return convertValidate(claims), nil
+	user, err := handler.Repo.FindOneUser(claims.Id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "user with id %d not found", claims.Id)
+		}
+		return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
+	}
+	return convertValidate(user), nil
 }

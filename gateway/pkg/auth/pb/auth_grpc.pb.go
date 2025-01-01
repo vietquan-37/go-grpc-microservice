@@ -22,7 +22,6 @@ const (
 	AuthService_Register_FullMethodName   = "/pb.AuthService/Register"
 	AuthService_Login_FullMethodName      = "/pb.AuthService/Login"
 	AuthService_GetOneUser_FullMethodName = "/pb.AuthService/GetOneUser"
-	AuthService_Validate_FullMethodName   = "/pb.AuthService/Validate"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -32,7 +31,6 @@ type AuthServiceClient interface {
 	Register(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	GetOneUser(ctx context.Context, in *GetOneUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
-	Validate(ctx context.Context, in *ValidateRequest, opts ...grpc.CallOption) (*ValidateResponse, error)
 }
 
 type authServiceClient struct {
@@ -70,15 +68,6 @@ func (c *authServiceClient) GetOneUser(ctx context.Context, in *GetOneUserReques
 	return out, nil
 }
 
-func (c *authServiceClient) Validate(ctx context.Context, in *ValidateRequest, opts ...grpc.CallOption) (*ValidateResponse, error) {
-	out := new(ValidateResponse)
-	err := c.cc.Invoke(ctx, AuthService_Validate_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility
@@ -86,7 +75,6 @@ type AuthServiceServer interface {
 	Register(context.Context, *CreateUserRequest) (*UserResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	GetOneUser(context.Context, *GetOneUserRequest) (*UserResponse, error)
-	Validate(context.Context, *ValidateRequest) (*ValidateResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -102,9 +90,6 @@ func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*Lo
 }
 func (UnimplementedAuthServiceServer) GetOneUser(context.Context, *GetOneUserRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOneUser not implemented")
-}
-func (UnimplementedAuthServiceServer) Validate(context.Context, *ValidateRequest) (*ValidateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Validate not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 
@@ -173,24 +158,6 @@ func _AuthService_GetOneUser_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_Validate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ValidateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).Validate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_Validate_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Validate(ctx, req.(*ValidateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -209,10 +176,6 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOneUser",
 			Handler:    _AuthService_GetOneUser_Handler,
-		},
-		{
-			MethodName: "Validate",
-			Handler:    _AuthService_Validate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

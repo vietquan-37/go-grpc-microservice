@@ -9,4 +9,5 @@ FROM alpine:latest AS server
 WORKDIR /app
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /bin/server ./server
+COPY app.env ./
 CMD ["./server"]

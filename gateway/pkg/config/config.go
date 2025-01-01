@@ -1,28 +1,26 @@
 package config
 
 import (
-	"errors"
-	"os"
+	"github.com/spf13/viper"
 )
 
 type Config struct {
-	GatewayPort string
-	AuthUrl     string
-	ProductUrl  string
-	OrderUrl    string
+	GatewayPort string `mapstructure:"GATEWAY_PORT"`
+	AuthUrl     string `mapstructure:"AUTH_URL"`
+	ProductUrl  string `mapstructure:"PRODUCT_URL"`
+	OrderUrl    string `mapstructure:"ORDER_URL"`
 }
 
-func LoadConfig() (*Config, error) {
+func LoadConfig(path string) (config *Config, err error) {
 
-	config := &Config{
-		GatewayPort: os.Getenv("GATEWAY_PORT"),
-		AuthUrl:     os.Getenv("AUTH_URL"),
-		ProductUrl:  os.Getenv("PRODUCT_URL"),
-		OrderUrl:    os.Getenv("ORDER_URL"),
+	viper.AddConfigPath(path)
+	viper.SetConfigName("app")
+	viper.SetConfigType("env")
+	viper.AutomaticEnv()
+	err = viper.ReadInConfig()
+	if err != nil {
+		return
 	}
-
-	if config.GatewayPort == "" || config.AuthUrl == "" || config.ProductUrl == "" || config.OrderUrl == "" {
-		return nil, errors.New("missing env variable")
-	}
-	return config, nil
+	err = viper.Unmarshal(&config)
+	return
 }

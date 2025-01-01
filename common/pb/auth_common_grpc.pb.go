@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             (unknown)
-// source: auth.proto
+// source: auth_common.proto
 
 package pb
 
@@ -20,13 +20,15 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	AuthService_GetOneUser_FullMethodName = "/pb.AuthService/GetOneUser"
+	AuthService_Validate_FullMethodName   = "/pb.AuthService/Validate"
 )
 
 // AuthServiceClient is the client API for AuthService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthServiceClient interface {
-	GetOneUser(ctx context.Context, in *GetOneUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	GetOneUser(ctx context.Context, in *GetOneUseReq, opts ...grpc.CallOption) (*User, error)
+	Validate(ctx context.Context, in *ValidateReq, opts ...grpc.CallOption) (*ValidateRsp, error)
 }
 
 type authServiceClient struct {
@@ -37,10 +39,20 @@ func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
 	return &authServiceClient{cc}
 }
 
-func (c *authServiceClient) GetOneUser(ctx context.Context, in *GetOneUserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
+func (c *authServiceClient) GetOneUser(ctx context.Context, in *GetOneUseReq, opts ...grpc.CallOption) (*User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UserResponse)
+	out := new(User)
 	err := c.cc.Invoke(ctx, AuthService_GetOneUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) Validate(ctx context.Context, in *ValidateReq, opts ...grpc.CallOption) (*ValidateRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ValidateRsp)
+	err := c.cc.Invoke(ctx, AuthService_Validate_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +63,8 @@ func (c *authServiceClient) GetOneUser(ctx context.Context, in *GetOneUserReques
 // All implementations should embed UnimplementedAuthServiceServer
 // for forward compatibility.
 type AuthServiceServer interface {
-	GetOneUser(context.Context, *GetOneUserRequest) (*UserResponse, error)
+	GetOneUser(context.Context, *GetOneUseReq) (*User, error)
+	Validate(context.Context, *ValidateReq) (*ValidateRsp, error)
 }
 
 // UnimplementedAuthServiceServer should be embedded to have
@@ -61,8 +74,11 @@ type AuthServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthServiceServer struct{}
 
-func (UnimplementedAuthServiceServer) GetOneUser(context.Context, *GetOneUserRequest) (*UserResponse, error) {
+func (UnimplementedAuthServiceServer) GetOneUser(context.Context, *GetOneUseReq) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOneUser not implemented")
+}
+func (UnimplementedAuthServiceServer) Validate(context.Context, *ValidateReq) (*ValidateRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Validate not implemented")
 }
 func (UnimplementedAuthServiceServer) testEmbeddedByValue() {}
 
@@ -85,7 +101,7 @@ func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
 }
 
 func _AuthService_GetOneUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetOneUserRequest)
+	in := new(GetOneUseReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -97,7 +113,25 @@ func _AuthService_GetOneUser_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: AuthService_GetOneUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).GetOneUser(ctx, req.(*GetOneUserRequest))
+		return srv.(AuthServiceServer).GetOneUser(ctx, req.(*GetOneUseReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_Validate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).Validate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_Validate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).Validate(ctx, req.(*ValidateReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -113,7 +147,11 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetOneUser",
 			Handler:    _AuthService_GetOneUser_Handler,
 		},
+		{
+			MethodName: "Validate",
+			Handler:    _AuthService_Validate_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "auth.proto",
+	Metadata: "auth_common.proto",
 }

@@ -8,6 +8,7 @@ import (
 )
 
 func DbConn(DbSource string) *gorm.DB {
+
 	db, err := gorm.Open(
 		postgres.Open(DbSource), &gorm.Config{TranslateError: true})
 	if err != nil {

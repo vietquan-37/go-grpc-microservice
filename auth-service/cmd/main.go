@@ -1,7 +1,8 @@
 package main
 
 import (
-	"common/interceptor"
+	"common/loggers"
+	"common/validate"
 	"github.com/rs/zerolog/log"
 	"net"
 
@@ -16,7 +17,7 @@ import (
 )
 
 func main() {
-	c, err := config.LoadConfig()
+	c, err := config.LoadConfig("./")
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config file: ")
 	}
@@ -30,14 +31,14 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load jwt secret: ")
 	}
-	validateInterceptor, err := interceptor.NewValidationInterceptor()
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create interceptor: ")
-	}
 	h := handler.NewAuthHandler(*jwtMaker, repo)
+	validateInterceptor, err := validate.NewValidationInterceptor()
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot create validator interceptor:")
+	}
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			interceptor.GrpcLoggerInterceptor,
+			loggers.GrpcLoggerInterceptor,
 			validateInterceptor.ValidateInterceptor(),
 		))
 	pb.RegisterAuthServiceServer(grpcServer, h)

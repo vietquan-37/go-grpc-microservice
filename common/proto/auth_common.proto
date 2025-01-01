@@ -1,0 +1,25 @@
+syntax="proto3";
+package  pb;
+
+import "google/protobuf/timestamp.proto";
+option go_package = "common/pb";
+message GetOneUseReq{
+  int32 id=1;
+}
+message User{
+  int32 user_id=1;
+  string user_name=2;
+  string phone_number=3;
+  string role=4;
+  google.protobuf.Timestamp create_at=5;
+}
+message ValidateReq{
+  string token=1;
+}
+message ValidateRsp{
+  User user=1;
+}
+service AuthService{
+  rpc GetOneUser(GetOneUseReq)returns(User){}
+  rpc Validate(ValidateReq)returns(ValidateRsp){}
+}

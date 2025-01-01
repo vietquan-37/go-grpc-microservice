@@ -1,6 +1,7 @@
 package handler
 
 import (
+	commonclient "common/client"
 	"context"
 	"errors"
 	"github.com/vietquan-37/order-service/pkg/client"
@@ -15,11 +16,11 @@ import (
 type OrderHandler struct {
 	pb.UnimplementedOrderServiceServer
 	ProductClient client.ProductClient
-	AuthClient    client.AuthClient
+	AuthClient    commonclient.AuthClient
 	Repo          repo.IOrderRepo
 }
 
-func NewOrderHandler(productClient client.ProductClient, authClient client.AuthClient, repo repo.IOrderRepo) *OrderHandler {
+func NewOrderHandler(productClient client.ProductClient, authClient commonclient.AuthClient, repo repo.IOrderRepo) *OrderHandler {
 	return &OrderHandler{
 		ProductClient: productClient,
 		AuthClient:    authClient,

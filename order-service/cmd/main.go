@@ -1,27 +1,27 @@
 package main
 
 import (
+	commonclient "common/client"
 	"common/interceptor"
-
-	"github.com/vietquan-37/order-service/pkg/client"
-	"github.com/vietquan-37/order-service/pkg/pb"
-	"github.com/vietquan-37/order-service/pkg/repo"
-
+	"common/loggers"
+	"common/validate"
 	"github.com/rs/zerolog/log"
-	"github.com/vietquan-37/order-service/pkg/handler"
-
+	"github.com/vietquan-37/order-service/pkg/client"
 	"github.com/vietquan-37/order-service/pkg/config"
 	"github.com/vietquan-37/order-service/pkg/db"
+	"github.com/vietquan-37/order-service/pkg/handler"
+	"github.com/vietquan-37/order-service/pkg/pb"
+	"github.com/vietquan-37/order-service/pkg/repo"
+	"github.com/vietquan-37/order-service/pkg/routes"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"gorm.io/gorm"
-
 	"net"
 )
 
 func main() {
 
-	c, err := config.LoadConfig()
+	c, err := config.LoadConfig("./")
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot load from config:")
 	}
@@ -32,16 +32,21 @@ func main() {
 	}
 	orderRepo := InitOrderRepo(d)
 	productClient := client.InitProductClient(c.ProductURL)
-	authClient := client.InitAuthClient(c.AuthURL)
-	h := handler.NewOrderHandler(productClient, authClient, orderRepo)
-	validateInterceptor, err := interceptor.NewValidationInterceptor()
+	authClient := commonclient.InitAuthClient(c.AuthURL)
+	h := handler.NewOrderHandler(productClient, *authClient, orderRepo)
+	validateInterceptor, err := validate.NewValidationInterceptor()
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create validator interceptor:")
 	}
+
+	roles := routes.AccessibleRoles
+	authInterceptor := interceptor.NewAuthInterceptor(*authClient, roles())
+
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			interceptor.GrpcLoggerInterceptor,
+			loggers.GrpcLoggerInterceptor,
 			validateInterceptor.ValidateInterceptor(),
+			authInterceptor.UnaryAuthInterceptor(),
 		),
 	)
 	pb.RegisterOrderServiceServer(grpcServer, h)

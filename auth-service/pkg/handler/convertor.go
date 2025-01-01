@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"github.com/vietquan-37/auth-service/pkg/config"
 	"github.com/vietquan-37/auth-service/pkg/model"
 	"github.com/vietquan-37/auth-service/pkg/model/enum"
 	"github.com/vietquan-37/auth-service/pkg/pb"
@@ -17,7 +16,7 @@ func convertUser(req *pb.CreateUserRequest) *model.User {
 	}
 }
 
-func convertUserResponse(user model.User) *pb.UserResponse {
+func convertUserResponse(user *model.User) *pb.UserResponse {
 	return &pb.UserResponse{
 		UserId:      int32(user.ID),
 		UserName:    user.PhoneNumber,
@@ -27,9 +26,8 @@ func convertUserResponse(user model.User) *pb.UserResponse {
 	}
 
 }
-func convertValidate(claims *config.JwtClaim) *pb.ValidateResponse {
+func convertValidate(user *model.User) *pb.ValidateResponse {
 	return &pb.ValidateResponse{
-		UserId: claims.Id,
-		Role:   claims.Role,
+		User: convertUserResponse(user),
 	}
 }

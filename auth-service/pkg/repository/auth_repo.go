@@ -16,7 +16,7 @@ type AuthRepo struct {
 
 func NewAuthRepo(db *gorm.DB) IAuthRepo {
 	repo := &AuthRepo{DB: db}
-	c, err := config.LoadConfig()
+	c, err := config.LoadConfig("./")
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config file: ")
 	}
