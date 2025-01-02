@@ -4,6 +4,8 @@ import (
 	commonclient "common/client"
 	"common/interceptor"
 	"common/loggers"
+	"common/mtdt"
+	"common/routes"
 	"common/validate"
 	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/order-service/pkg/client"
@@ -12,7 +14,7 @@ import (
 	"github.com/vietquan-37/order-service/pkg/handler"
 	"github.com/vietquan-37/order-service/pkg/pb"
 	"github.com/vietquan-37/order-service/pkg/repo"
-	"github.com/vietquan-37/order-service/pkg/routes"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"gorm.io/gorm"
@@ -45,8 +47,9 @@ func main() {
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			loggers.GrpcLoggerInterceptor,
-			validateInterceptor.ValidateInterceptor(),
+			mtdt.ForwardMetadataUnaryServerInterceptor(),
 			authInterceptor.UnaryAuthInterceptor(),
+			validateInterceptor.ValidateInterceptor(),
 		),
 	)
 	pb.RegisterOrderServiceServer(grpcServer, h)

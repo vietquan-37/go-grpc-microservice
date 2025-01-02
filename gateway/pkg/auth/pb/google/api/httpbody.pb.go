@@ -86,7 +86,7 @@ type HttpBody struct {
 	ContentType string `protobuf:"bytes,1,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
 	// The HTTP request/response body as raw binary.
 	Data []byte `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
-	// Application specific response metadata. Must be set in the first response
+	// Application specific response mtdt. Must be set in the first response
 	// for streaming APIs.
 	Extensions []*anypb.Any `protobuf:"bytes,3,rep,name=extensions,proto3" json:"extensions,omitempty"`
 }

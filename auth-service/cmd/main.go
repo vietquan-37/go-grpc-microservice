@@ -2,6 +2,7 @@ package main
 
 import (
 	"common/loggers"
+	"common/mtdt"
 	"common/validate"
 	"github.com/rs/zerolog/log"
 	"net"
@@ -39,6 +40,7 @@ func main() {
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			loggers.GrpcLoggerInterceptor,
+			mtdt.ForwardMetadataUnaryServerInterceptor(),
 			validateInterceptor.ValidateInterceptor(),
 		))
 	pb.RegisterAuthServiceServer(grpcServer, h)

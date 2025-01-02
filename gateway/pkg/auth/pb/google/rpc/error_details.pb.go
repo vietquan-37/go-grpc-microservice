@@ -42,7 +42,7 @@ const (
 //
 //	{ "reason": "API_DISABLED"
 //	  "domain": "googleapis.com"
-//	  "metadata": {
+//	  "mtdt": {
 //	    "resource": "projects/123",
 //	    "service": "pubsub.googleapis.com"
 //	  }
@@ -55,7 +55,7 @@ const (
 //
 //	{ "reason": "STOCKOUT"
 //	  "domain": "spanner.googleapis.com",
-//	  "metadata": {
+//	  "mtdt": {
 //	    "availableRegions": "us-central1,us-east2"
 //	  }
 //	}
@@ -85,7 +85,7 @@ type ErrorInfo struct {
 	// {"instanceLimit": "100/request"}, should be returned as,
 	// {"instanceLimitPerRequest": "100"}, if the client exceeds the number of
 	// instances that can be created in a single (batch) request.
-	Metadata map[string]string `protobuf:"bytes,3,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Metadata map[string]string `protobuf:"bytes,3,rep,name=mtdt,proto3" json:"mtdt,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *ErrorInfo) Reset() {
@@ -422,7 +422,7 @@ func (x *BadRequest) GetFieldViolations() []*BadRequest_FieldViolation {
 	return nil
 }
 
-// Contains metadata about the request that clients can attach when filing a bug
+// Contains mtdt about the request that clients can attach when filing a bug
 // or providing other forms of feedback.
 type RequestInfo struct {
 	state         protoimpl.MessageState
@@ -1104,7 +1104,7 @@ var file_google_rpc_error_details_proto_goTypes = []interface{}{
 	(*durationpb.Duration)(nil),           // 15: google.protobuf.Duration
 }
 var file_google_rpc_error_details_proto_depIdxs = []int32{
-	10, // 0: google.rpc.ErrorInfo.metadata:type_name -> google.rpc.ErrorInfo.MetadataEntry
+	10, // 0: google.rpc.ErrorInfo.mtdt:type_name -> google.rpc.ErrorInfo.MetadataEntry
 	15, // 1: google.rpc.RetryInfo.retry_delay:type_name -> google.protobuf.Duration
 	11, // 2: google.rpc.QuotaFailure.violations:type_name -> google.rpc.QuotaFailure.Violation
 	12, // 3: google.rpc.PreconditionFailure.violations:type_name -> google.rpc.PreconditionFailure.Violation

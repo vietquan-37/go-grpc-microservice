@@ -2,6 +2,7 @@ package handler
 
 import (
 	commonclient "common/client"
+	"common/extract"
 	"context"
 	"errors"
 	"github.com/vietquan-37/order-service/pkg/client"
@@ -30,14 +31,11 @@ func NewOrderHandler(productClient client.ProductClient, authClient commonclient
 
 func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest) (*pb.CommonResponse, error) {
 
-	userID, _, err := extractUserMetadata(ctx)
+	metadata, err := extract.UsersMetadata(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to extract user metadata: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to extract user mtdt: %v", err)
 	}
-	user, err := h.AuthClient.GetOneUser(userID)
-	if err != nil {
-		return nil, err
-	}
+
 	product, err := h.ProductClient.FindOneProduct(ctx, req.GetProductId())
 	if err != nil {
 		return nil, err
@@ -45,9 +43,9 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 	if product.Stock < req.Stock {
 		return nil, status.Errorf(codes.InvalidArgument, "Product stock is insufficient")
 	}
-	order, _ := h.Repo.GetPendingOrder(user.UserId)
+	order, _ := h.Repo.GetPendingOrder(metadata.User.UserId)
 	if order == nil {
-		order, err = h.Repo.CreateOrder(createPendingOrder(user.UserId))
+		order, err = h.Repo.CreateOrder(createPendingOrder(metadata.User.UserId))
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error while creating order: %v", err)
 		}
@@ -93,9 +91,9 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 	}, nil
 }
 func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailRequest) (*pb.CommonResponse, error) {
-	userID, _, err := extractUserMetadata(ctx)
+	metadata, err := extract.UsersMetadata(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to extract user metadata: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to extract user mtdt: %v", err)
 	}
 	detail, err := h.Repo.GetOrderDetailById(req.GetId())
 	if err != nil {
@@ -109,7 +107,7 @@ func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailReq
 		if err != nil {
 			return err
 		}
-		order, err := h.Repo.GetPendingOrder(userID)
+		order, err := h.Repo.GetPendingOrder(metadata.User.UserId)
 		if err != nil {
 			return err
 		}
@@ -129,15 +127,15 @@ func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailReq
 	}, nil
 }
 func (h *OrderHandler) GetUserCart(ctx context.Context, req *pb.UserCartRequest) (*pb.UserCartResponse, error) {
-	userID, _, err := extractUserMetadata(ctx)
+	metadata, err := extract.UsersMetadata(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to extract user metadata: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to extract user mtdt: %v", err)
 	}
-	user, err := h.AuthClient.GetOneUser(userID)
-	if err != nil {
-		return nil, err
-	}
-	order, err := h.Repo.GetPendingOrder(user.UserId)
+	//user, err := h.AuthClient.GetOneUser(ctx, metadata.User.UserId)
+	//if err != nil {
+	//	return nil, err
+	//}
+	order, err := h.Repo.GetPendingOrder(metadata.User.UserId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Error(codes.NotFound, "order not found")

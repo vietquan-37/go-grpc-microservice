@@ -25,15 +25,15 @@ func InitAuthClient(url string) *AuthClient {
 	}
 }
 
-func (a *AuthClient) GetOneUser(id int32) (*pb.User, error) {
+func (a *AuthClient) GetOneUser(ctx context.Context, id int32) (*pb.User, error) {
 	req := &pb.GetOneUseReq{
 		Id: id,
 	}
-	return a.AuthClient.GetOneUser(context.Background(), req)
+	return a.AuthClient.GetOneUser(ctx, req)
 }
 
-func (a *AuthClient) Validate(token string) (*pb.ValidateRsp, error) {
-	return a.AuthClient.Validate(context.Background(), &pb.ValidateReq{
+func (a *AuthClient) Validate(ctx context.Context, token string) (*pb.ValidateRsp, error) {
+	return a.AuthClient.Validate(ctx, &pb.ValidateReq{
 		Token: token,
 	})
 }

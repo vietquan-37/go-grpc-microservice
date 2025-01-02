@@ -3,15 +3,16 @@ package loggers
 import (
 	"context"
 	"github.com/rs/zerolog/log"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"time"
 )
 
 const (
 	xForwardedForHeader = "x-forwarded-for"
+	ipUnknown           = "unknown"
 )
 
 func GrpcLoggerInterceptor(
@@ -21,6 +22,7 @@ func GrpcLoggerInterceptor(
 	handler grpc.UnaryHandler) (interface{}, error) {
 	start := time.Now()
 	result, err := handler(ctx, req)
+
 	duration := time.Since(start)
 	statusCode := codes.Unknown
 	if st, ok := status.FromError(err); ok {
@@ -30,15 +32,14 @@ func GrpcLoggerInterceptor(
 	if err != nil {
 		logger = log.Error().Err(err)
 	}
-	//clientIp, err := extractUserIp(ctx)
-	//if err != nil {
-	//	loggers = log.Error().Err(err)
-	//}
+	clientIp := extractUserIp(ctx)
+	if clientIp == ipUnknown {
+		log.Warn().Err(err).Msg("Failed to extract client IP")
+	}
 	logger.
 		Str("protocol", "grpc").
-		//Str("ip_address", clientIp).
+		Str("ip_address", clientIp).
 		Dur("duration", duration).
-		Int("status_code", int(statusCode)).
 		Str("status_text", statusCode.String()).
 		Str("method", info.FullMethod).
 		Msg("Received a grpc request")
@@ -46,15 +47,17 @@ func GrpcLoggerInterceptor(
 	return result, err
 }
 
-//func extractUserIp(ctx context.Context) (Ip string, err error) {
-//	if meta, ok := metadata.FromIncomingContext(ctx); ok {
-//
-//		if ClientIp := meta.Get(xForwardedForHeader); len(ClientIp) > 0 {
-//			Ip = ClientIp[0]
-//		}
-//	}
-//	if Ip == "" {
-//		return "", errors.New("no client ip found")
-//	}
-//	return Ip, nil
-//}
+func extractUserIp(ctx context.Context) string {
+	// from mtdt in grpc
+	if meta, ok := metadata.FromIncomingContext(ctx); ok {
+		if clientIp := meta.Get(xForwardedForHeader); len(clientIp) > 0 {
+			return clientIp[0]
+		}
+	}
+
+	//if p, ok := peer.FromContext(ctx); ok {
+	//	return p.Addr.String()
+	//}
+
+	return ipUnknown
+}

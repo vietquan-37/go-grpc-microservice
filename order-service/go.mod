@@ -4,6 +4,7 @@ go 1.23.1
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.35.2-20241127180247-a33202765966.1
+
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
 	google.golang.org/grpc v1.65.0

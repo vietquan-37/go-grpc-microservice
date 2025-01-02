@@ -7,6 +7,7 @@ import (
 type Config struct {
 	DbSource string `mapstructure:"DB_SOURCE"`
 	GrpcAddr string `mapstructure:"GRPC_SERVER_ADDRESS"`
+	AuthUrl  string `mapstructure:"AUTH_URL"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

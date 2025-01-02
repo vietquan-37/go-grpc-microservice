@@ -1,9 +1,14 @@
 package main
 
 import (
+	commonclient "common/client"
+	"common/interceptor"
 	"common/loggers"
+	"common/mtdt"
+	"common/routes"
 	"common/validate"
 	"github.com/rs/zerolog/log"
+
 	"github.com/vietquan-37/product-service/pkg/config"
 	"github.com/vietquan-37/product-service/pkg/db"
 	"github.com/vietquan-37/product-service/pkg/handler"
@@ -29,13 +34,19 @@ func main() {
 	}
 	r := NewRepoInit(d)
 	h := handler.NewProductHandler(r)
+	authClient := commonclient.InitAuthClient(c.AuthUrl)
 	validateInterceptor, err := validate.NewValidationInterceptor()
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create validator interceptor:")
 	}
+	roles := routes.AccessibleRoles
+	authInterceptor := interceptor.NewAuthInterceptor(*authClient, roles())
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
+			authInterceptor.UnaryAuthInterceptor(),
 			loggers.GrpcLoggerInterceptor,
+			mtdt.ForwardMetadataUnaryServerInterceptor(),
+
 			validateInterceptor.ValidateInterceptor(),
 		),
 	)
