@@ -1,0 +1,19 @@
+FROM golang:1.23.1-alpine AS builder
+WORKDIR /app
+COPY ./auth-service/go.mod ./auth-service/
+COPY ./gateway/go.mod ./gateway/
+COPY ./order-service/go.mod ./order-service/
+COPY go.work ./
+COPY common ./common
+
+COPY ./product-service/go.mod ./product-service/go.sum ./product-service/
+RUN go mod download
+COPY ./product-service ./product-service
+RUN go build -o /bin/server ./product-service/cmd
+
+FROM alpine:latest AS server
+WORKDIR /app
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /bin/server ./server
+COPY ./product-service/app.env ./
+CMD ["./server"]
