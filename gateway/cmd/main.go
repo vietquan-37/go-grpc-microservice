@@ -47,7 +47,6 @@ func main() {
 	if err = pb.RegisterOrderServiceHandlerClient(context.Background(), mux, orderClient.Client); err != nil {
 		log.Fatal().Err(err).Msg("fail to register order client:")
 	}
-
 	lis, err := net.Listen("tcp", c.GatewayPort)
 	if err != nil {
 		log.Fatal().Err(err).Msg("fail to listen:")

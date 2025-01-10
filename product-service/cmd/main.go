@@ -43,10 +43,9 @@ func main() {
 	authInterceptor := interceptor.NewAuthInterceptor(*authClient, roles())
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			authInterceptor.UnaryAuthInterceptor(),
 			loggers.GrpcLoggerInterceptor,
 			mtdt.ForwardMetadataUnaryServerInterceptor(),
-
+			authInterceptor.UnaryAuthInterceptor(),
 			validateInterceptor.ValidateInterceptor(),
 		),
 	)

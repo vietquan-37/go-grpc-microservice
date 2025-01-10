@@ -19,6 +19,7 @@ func convertToCart(order *model.Order) *pb.UserCartResponse {
 		Items:   items,
 	}
 }
+
 func convertItems(detail model.OrderDetail) *pb.ItemCart {
 	return &pb.ItemCart{
 		Id:        detail.Id,

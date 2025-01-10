@@ -18,6 +18,7 @@ import (
 )
 
 func main() {
+
 	c, err := config.LoadConfig("./")
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config file: ")
@@ -37,6 +38,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create validator interceptor:")
 	}
+	
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			loggers.GrpcLoggerInterceptor,

@@ -1,6 +1,5 @@
-HONY: run-all  buf
+PHONY: run-all  buf
 run-all:
-
 	cd auth-service && start /b make run-server
 	cd order-service && start /b make run-server
 	cd product-service && start /b  make run-server
@@ -10,9 +9,9 @@ buf:
 	buf generate
 docker-build:
 	cd gateway && docker build -t vietquandeptrai/api-gateway .
-	cd auth-service && docker build -t  vietquandeptrai/auth-svc .
+	docker build -f ./auth-service/Dockerfile -t  vietquandeptrai/auth-svc .
 	docker build -f ./product-service/Dockerfile -t vietquandeptrai/product-svc .
-	cd order-service && docker build -t vietquandeptrai/order-svc .
+	docker build -f ./order-service/Dockerfile -t vietquandeptrai/order-svc .
 docker-push:
 	cd gateway && docker push vietquandeptrai/api-gateway
 	cd auth-service && docker push vietquandeptrai/auth-svc
