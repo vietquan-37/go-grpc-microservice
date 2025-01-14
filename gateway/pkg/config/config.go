@@ -5,10 +5,12 @@ import (
 )
 
 type Config struct {
-	GatewayPort string `mapstructure:"GATEWAY_PORT"`
-	AuthUrl     string `mapstructure:"AUTH_URL"`
-	ProductUrl  string `mapstructure:"PRODUCT_URL"`
-	OrderUrl    string `mapstructure:"ORDER_URL"`
+	GatewayPort        string `mapstructure:"GATEWAY_PORT"`
+	AuthServiceName    string `mapstructure:"AUTH_SERVICE_NAME"`
+	ProductServiceName string `mapstructure:"PRODUCT_SERVICE_NAME"`
+	OrderServiceName   string `mapstructure:"ORDER_SERVICE_NAME"`
+	ServiceName        string `mapstructure:"SERVICE_NAME"`
+	ConsulAddr         string `mapstructure:"CONSUL_ADDR"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

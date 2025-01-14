@@ -1,12 +1,12 @@
 package main
 
 import (
+	"common/discovery"
+	"common/discovery/consul"
 	"common/loggers"
 	"common/mtdt"
 	"common/validate"
 	"github.com/rs/zerolog/log"
-	"net"
-
 	"github.com/vietquan-37/auth-service/pkg/config"
 	"github.com/vietquan-37/auth-service/pkg/db"
 	"github.com/vietquan-37/auth-service/pkg/handler"
@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"gorm.io/gorm"
+	"net"
+	"time"
 )
 
 func main() {
@@ -23,6 +25,24 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config file: ")
 	}
+	registry, err := consul.NewRegistry(c.ConsulAddress)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to connect to consul")
+	}
+	instanceId := discovery.GenerateInstanceID(c.ServiceName)
+	if err := registry.Register(instanceId, c.ServiceName, c.GrpcServerAddress); err != nil {
+		log.Fatal().Err(err).Msg("failed to register service")
+	}
+	go func() {
+		for {
+			if err := registry.HealthCheck(instanceId); err != nil {
+				log.Fatal().Err(err).Msg("failed to health check service")
+			}
+			time.Sleep(1 * time.Second)
+		}
+
+	}()
+	defer registry.Deregister(instanceId, c.ServiceName)
 	d := db.DbConn(c.DbSource)
 	lis, err := net.Listen("tcp", c.GrpcServerAddress)
 	if err != nil {
@@ -38,7 +58,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create validator interceptor:")
 	}
-	
+
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			loggers.GrpcLoggerInterceptor,

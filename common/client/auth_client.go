@@ -1,39 +1,34 @@
 package client
 
 import (
+	"common/discovery"
 	"common/pb"
 	"context"
-	"fmt"
+	"github.com/rs/zerolog/log"
+)
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+const (
+	serviceName = "auth"
 )
 
 type AuthClient struct {
-	AuthClient pb.AuthServiceClient
+	registry discovery.Registry
 }
 
-func InitAuthClient(url string) *AuthClient {
-	// Use grpc.Dial to create a connection
-	conn, err := grpc.NewClient(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		fmt.Printf("Cannot connect to Auth service: %v\n", err)
-		return nil
-	}
+func InitAuthClient(registry discovery.Registry) *AuthClient {
 	return &AuthClient{
-		AuthClient: pb.NewAuthServiceClient(conn),
+		registry: registry,
 	}
-}
-
-func (a *AuthClient) GetOneUser(ctx context.Context, id int32) (*pb.User, error) {
-	req := &pb.GetOneUseReq{
-		Id: id,
-	}
-	return a.AuthClient.GetOneUser(ctx, req)
 }
 
 func (a *AuthClient) Validate(ctx context.Context, token string) (*pb.ValidateRsp, error) {
-	return a.AuthClient.Validate(ctx, &pb.ValidateReq{
+	conn, err := discovery.ServiceConnection(ctx, serviceName, a.registry)
+	if err != nil {
+		log.Fatal().Err(err).Msg("fail to dial to service: ")
+	}
+	defer conn.Close()
+	client := pb.NewAuthServiceClient(conn)
+	return client.Validate(ctx, &pb.ValidateReq{
 		Token: token,
 	})
 }

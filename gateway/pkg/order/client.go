@@ -1,22 +1,21 @@
 package order
 
 import (
-	"fmt"
+	"common/discovery"
+	"context"
+	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/gateway/pkg/order/pb"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
-type OrderClient struct {
+type Client struct {
 	Client pb.OrderServiceClient
 }
 
-func InitOrderClient(addr string) OrderClient {
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	conn, err := grpc.NewClient(addr, opts...)
+func InitOrderClient(registry discovery.Registry, serviceName string) Client {
+	conn, err := discovery.ServiceConnection(context.Background(), serviceName, registry)
 	if err != nil {
-		fmt.Printf("cannot connect to order client: %v", err)
+		log.Fatal().Err(err).Msg("fail to dial to service: ")
 	}
-	return OrderClient{pb.NewOrderServiceClient(conn)}
+
+	return Client{pb.NewOrderServiceClient(conn)}
 }

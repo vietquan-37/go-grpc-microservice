@@ -1,24 +1,21 @@
 package product
 
 import (
-	"fmt"
+	"common/discovery"
+	"context"
+	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/gateway/pkg/product/pb"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
-type ProductClient struct {
+type Client struct {
 	Client pb.ProductServiceClient
 }
 
-func InitProductClient(addr string) ProductClient {
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	conn, err := grpc.Dial(addr, opts...)
+func InitProductClient(registry discovery.Registry, serviceName string) Client {
+	conn, err := discovery.ServiceConnection(context.Background(), serviceName, registry)
 	if err != nil {
-		fmt.Printf("cannot connect to product client: %v", err)
+		log.Fatal().Err(err).Msg("fail to dial to service: ")
 	}
-	return ProductClient{
-		Client: pb.NewProductServiceClient(conn),
-	}
+
+	return Client{pb.NewProductServiceClient(conn)}
 }

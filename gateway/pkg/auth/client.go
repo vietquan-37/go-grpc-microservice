@@ -1,22 +1,20 @@
 package auth
 
 import (
-	"fmt"
+	"common/discovery"
+	"context"
+	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/gateway/pkg/auth/pb"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
-type AuthClient struct {
+type Client struct {
 	Client pb.AuthServiceClient
 }
 
-func InitAuthClient(addr string) AuthClient {
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	conn, err := grpc.NewClient(addr, opts...)
+func InitAuthClient(registry discovery.Registry, serviceName string) Client {
+	conn, err := discovery.ServiceConnection(context.Background(), serviceName, registry)
 	if err != nil {
-		fmt.Printf("cannot connect to auth client: %v", err)
+		log.Fatal().Err(err).Msg("fail to dial to service: ")
 	}
-	return AuthClient{Client: pb.NewAuthServiceClient(conn)}
+	return Client{Client: pb.NewAuthServiceClient(conn)}
 }

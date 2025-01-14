@@ -1,34 +1,35 @@
 package client
 
 import (
+	"common/discovery"
 	"context"
+	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/order-service/pkg/pb"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"log"
+)
+
+const (
+	serviceName = "product"
 )
 
 type ProductClient struct {
-	Client pb.ProductServiceClient
+	registry discovery.Registry
 }
 
-func InitProductClient(url string) ProductClient {
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func InitProductClient(registry discovery.Registry) *ProductClient {
 
-	conn, err := grpc.NewClient(url, opts...)
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+	return &ProductClient{
+		registry: registry,
 	}
-	c := ProductClient{
-		Client: pb.NewProductServiceClient(conn),
-	}
-	return c
 }
 func (c *ProductClient) FindOneProduct(ctx context.Context, productId int32) (*pb.ProductResponse, error) {
-	req := &pb.ProductRequest{
-		Id: productId,
+	conn, err := discovery.ServiceConnection(ctx, serviceName, c.registry)
+	if err != nil {
+		log.Fatal().Err(err).Msg("fail to dial to service: ")
 	}
+	defer conn.Close()
+	client := pb.NewProductServiceClient(conn)
 
-	return c.Client.FindOneProduct(ctx, req)
+	return client.FindOneProduct(ctx, &pb.ProductRequest{
+		Id: productId,
+	})
 }

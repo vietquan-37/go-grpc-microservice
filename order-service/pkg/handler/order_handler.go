@@ -16,12 +16,12 @@ import (
 
 type OrderHandler struct {
 	pb.UnimplementedOrderServiceServer
-	ProductClient client.ProductClient
-	AuthClient    commonclient.AuthClient
+	ProductClient *client.ProductClient
+	AuthClient    *commonclient.AuthClient
 	Repo          repo.IOrderRepo
 }
 
-func NewOrderHandler(productClient client.ProductClient, authClient commonclient.AuthClient, repo repo.IOrderRepo) *OrderHandler {
+func NewOrderHandler(productClient *client.ProductClient, authClient *commonclient.AuthClient, repo repo.IOrderRepo) *OrderHandler {
 	return &OrderHandler{
 		ProductClient: productClient,
 		AuthClient:    authClient,

@@ -7,9 +7,11 @@ import (
 type Config struct {
 	DbSource          string `mapstructure:"DB_SOURCE"`
 	GrpcServerAddress string `mapstructure:"GRPC_SERVER_ADDRESS"`
+	ServiceName       string `mapstructure:"SERVICE_NAME"`
 	JwtSecret         string `mapstructure:"JWT_SECRET"`
 	AdminUserName     string `mapstructure:"ADMIN_USERNAME"`
 	AdminPassword     string `mapstructure:"ADMIN_PASSWORD"`
+	ConsulAddress     string `mapstructure:"CONSUL_ADDR"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

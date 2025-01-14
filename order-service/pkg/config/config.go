@@ -7,8 +7,8 @@ import (
 type Config struct {
 	DbSource          string `mapstructure:"DB_SOURCE"`
 	GrpcServerAddress string `mapstructure:"GRPC_SERVER_ADDRESS"`
-	ProductURL        string `mapstructure:"PRODUCT_URL"`
-	AuthURL           string `mapstructure:"AUTH_URL"`
+	ServiceName       string `mapstructure:"SERVICE_NAME"`
+	ConsulAddr        string `mapstructure:"CONSUL_ADDR"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

@@ -20,11 +20,11 @@ const (
 )
 
 type AuthInterceptor struct {
-	authClient client.AuthClient
+	authClient *client.AuthClient
 	accessRole map[string][]string
 }
 
-func NewAuthInterceptor(authClient client.AuthClient, accessibleRole map[string][]string) *AuthInterceptor {
+func NewAuthInterceptor(authClient *client.AuthClient, accessibleRole map[string][]string) *AuthInterceptor {
 	return &AuthInterceptor{authClient, accessibleRole}
 }
 func (interceptor *AuthInterceptor) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
