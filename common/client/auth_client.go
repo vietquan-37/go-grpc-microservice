@@ -2,33 +2,35 @@ package client
 
 import (
 	"common/discovery"
+	"common/discovery/consul"
 	"common/pb"
 	"context"
-	"github.com/rs/zerolog/log"
 )
 
 const (
 	serviceName = "auth"
+	resolver    = "consul"
 )
 
 type AuthClient struct {
-	registry discovery.Registry
+	client pb.AuthServiceClient
 }
 
-func InitAuthClient(registry discovery.Registry) *AuthClient {
-	return &AuthClient{
-		registry: registry,
-	}
-}
-
-func (a *AuthClient) Validate(ctx context.Context, token string) (*pb.ValidateRsp, error) {
-	conn, err := discovery.ServiceConnection(ctx, serviceName, a.registry)
+func InitAuthClient(consulAddr string) (*AuthClient, error) {
+	err := consul.RegisterConsulResolver(consulAddr)
 	if err != nil {
-		log.Fatal().Err(err).Msg("fail to dial to service: ")
+		return nil, err
 	}
-	defer conn.Close()
+
+	conn, err := discovery.ServiceConnection(context.Background(), serviceName, resolver)
+	if err != nil {
+		return nil, err
+	}
 	client := pb.NewAuthServiceClient(conn)
-	return client.Validate(ctx, &pb.ValidateReq{
-		Token: token,
-	})
+	return &AuthClient{
+		client: client,
+	}, nil
+}
+func (a *AuthClient) Validate(ctx context.Context, token string) (*pb.ValidateRsp, error) {
+	return a.client.Validate(ctx, &pb.ValidateReq{Token: token})
 }

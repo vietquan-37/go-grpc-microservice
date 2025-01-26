@@ -2,8 +2,9 @@ package product
 
 import (
 	"common/discovery"
+	"common/discovery/consul"
 	"context"
-	"github.com/rs/zerolog/log"
+
 	"github.com/vietquan-37/gateway/pkg/product/pb"
 )
 
@@ -11,11 +12,18 @@ type Client struct {
 	Client pb.ProductServiceClient
 }
 
-func InitProductClient(registry discovery.Registry, serviceName string) Client {
-	conn, err := discovery.ServiceConnection(context.Background(), serviceName, registry)
+func InitProductClient(consulAddr, serviceName, resolver string) (*Client, error) {
+	err := consul.RegisterConsulResolver(consulAddr)
 	if err != nil {
-		log.Fatal().Err(err).Msg("fail to dial to service: ")
+		return nil, err
 	}
 
-	return Client{pb.NewProductServiceClient(conn)}
+	conn, err := discovery.ServiceConnection(context.Background(), serviceName, resolver)
+	if err != nil {
+		return nil, err
+	}
+	client := pb.NewProductServiceClient(conn)
+	return &Client{
+		Client: client,
+	}, nil
 }

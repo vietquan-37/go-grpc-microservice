@@ -1,7 +1,6 @@
 package consul
 
 import (
-	"context"
 	"fmt"
 	consul "github.com/hashicorp/consul/api"
 	"github.com/rs/zerolog/log"
@@ -53,17 +52,7 @@ func (r *Registry) Deregister(instanceID, serviceName string) {
 		log.Fatal().Err(err).Msg("fail deregister service: ")
 	}
 }
-func (r *Registry) Discover(ctx context.Context, serviceName string) ([]string, error) {
-	entries, _, err := r.client.Health().Service(serviceName, "", true, nil)
-	if err != nil {
-		return nil, err
-	}
-	var instances []string
-	for _, entry := range entries {
-		instances = append(instances, fmt.Sprintf("%s:%d", entry.Service.Address, entry.Service.Port))
-	}
-	return instances, nil
-}
+
 func (r *Registry) HealthCheck(instanceID string) error {
 	return r.client.Agent().UpdateTTL(
 		instanceID,

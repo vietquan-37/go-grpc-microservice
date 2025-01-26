@@ -52,6 +52,9 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 	}
 	price := float64(product.Price * float32(req.GetStock()))
 	detail, _ := h.Repo.GetOrderDetailByProductId(product.GetId())
+	if detail != nil && detail.Quantity+req.GetStock() > product.Stock {
+		return nil, status.Errorf(codes.InvalidArgument, "Product stock is insufficient")
+	}
 	err = h.Repo.Transaction(func(repo repo.IOrderRepo) error {
 		if detail == nil {
 			models := &model.OrderDetail{
@@ -74,7 +77,6 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 			}
 		}
 		order.Amount += price
-		//rollback
 		err = repo.UpdateOrder(order)
 		if err != nil {
 			return err

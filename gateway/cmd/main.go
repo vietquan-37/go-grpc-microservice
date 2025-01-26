@@ -4,6 +4,7 @@ import (
 	"common/discovery"
 	"common/discovery/consul"
 	"context"
+	"errors"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/gateway/pkg/auth"
@@ -12,12 +13,25 @@ import (
 	"github.com/vietquan-37/gateway/pkg/order/pb"
 	"github.com/vietquan-37/gateway/pkg/product"
 	productpb "github.com/vietquan-37/gateway/pkg/product/pb"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/encoding/protojson"
-	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	authpb "github.com/vietquan-37/gateway/pkg/auth/pb"
+)
+
+var interuptSignal = []os.Signal{
+	os.Interrupt,
+	syscall.SIGTERM,
+	syscall.SIGINT,
+}
+
+const (
+	resolver = "consul"
 )
 
 func main() {
@@ -25,6 +39,8 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("fail to load config:")
 	}
+	ctx, stop := signal.NotifyContext(context.Background(), interuptSignal...)
+	defer stop()
 	registry, err := consul.NewRegistry(c.ConsulAddr)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to consul")
@@ -43,9 +59,19 @@ func main() {
 
 	}()
 
-	authClient := auth.InitAuthClient(registry, c.AuthServiceName)
-	productClient := product.InitProductClient(registry, c.ProductServiceName)
-	orderClient := order.InitOrderClient(registry, c.OrderServiceName)
+	authClient, err := auth.InitAuthClient(c.ConsulAddr, c.AuthServiceName, resolver)
+	if err != nil {
+		log.Fatal().Err(err).Msg("fail to init auth client")
+	}
+	productClient, err := product.InitProductClient(c.ConsulAddr, c.ProductServiceName, resolver)
+	if err != nil {
+		log.Fatal().Err(err).Msg("fail to init product client")
+	}
+	orderClient, err := order.InitOrderClient(c.ConsulAddr, c.OrderServiceName, resolver)
+	if err != nil {
+		log.Fatal().Err(err).Msg("fail to init order client")
+
+	}
 	jsonOption := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 		MarshalOptions: protojson.MarshalOptions{
 			UseProtoNames: true,
@@ -69,12 +95,33 @@ func main() {
 	if err = pb.RegisterOrderServiceHandlerClient(context.Background(), mux, orderClient.Client); err != nil {
 		log.Fatal().Err(err).Msg("fail to register order client:")
 	}
-	lis, err := net.Listen("tcp", c.GatewayPort)
-	if err != nil {
-		log.Fatal().Err(err).Msg("fail to listen:")
+	httpServer := &http.Server{
+		Handler: mux,
+		Addr:    c.GatewayPort,
 	}
-	if err = http.Serve(lis, mux); err != nil {
-		log.Fatal().Err(err).Msg("gateway server closed abruptly: ")
+	waitGroup, ctx := errgroup.WithContext(ctx)
+	waitGroup.Go(func() error {
+		if err := httpServer.ListenAndServe(); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				return nil
+			}
+			log.Error().Err(err).Msg("fail to start http server")
+			return err
+		}
+		return nil
+	})
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+		log.Info().Msg("shutting down http server")
+		if err := httpServer.Shutdown(context.Background()); err != nil {
+			log.Error().Err(err).Msg("fail to shutdown http server")
+			return err
+		}
+		log.Info().Msg("http server shutdown successfully")
+		return nil
+	})
+	if err := waitGroup.Wait(); err != nil {
+		log.Error().Err(err).Msg("fail to wait for http server")
 	}
-
+	// graceful shutdown
 }
