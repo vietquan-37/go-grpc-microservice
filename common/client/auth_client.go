@@ -2,7 +2,6 @@ package client
 
 import (
 	"common/discovery"
-	"common/discovery/consul"
 	"common/pb"
 	"context"
 )
@@ -16,11 +15,7 @@ type AuthClient struct {
 	client pb.AuthServiceClient
 }
 
-func InitAuthClient(consulAddr string) (*AuthClient, error) {
-	err := consul.RegisterConsulResolver(consulAddr)
-	if err != nil {
-		return nil, err
-	}
+func InitAuthClient() (*AuthClient, error) {
 
 	conn, err := discovery.ServiceConnection(context.Background(), serviceName, resolver)
 	if err != nil {

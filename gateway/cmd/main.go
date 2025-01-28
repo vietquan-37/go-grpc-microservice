@@ -49,25 +49,29 @@ func main() {
 	if err := registry.Register(instanceId, c.ServiceName, c.GatewayPort); err != nil {
 		log.Fatal().Err(err).Msg("failed to register service")
 	}
+	err = consul.RegisterConsulResolver(registry.Client)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to register consul resolver")
+	}
 	go func() {
 		for {
 			if err := registry.HealthCheck(instanceId); err != nil {
 				log.Fatal().Err(err).Msg("failed to health check service")
 			}
-			time.Sleep(1 * time.Second)
+			time.Sleep(5 * time.Second)
 		}
 
 	}()
 
-	authClient, err := auth.InitAuthClient(c.ConsulAddr, c.AuthServiceName, resolver)
+	authClient, err := auth.InitAuthClient(c.AuthServiceName, resolver)
 	if err != nil {
 		log.Fatal().Err(err).Msg("fail to init auth client")
 	}
-	productClient, err := product.InitProductClient(c.ConsulAddr, c.ProductServiceName, resolver)
+	productClient, err := product.InitProductClient(c.ProductServiceName, resolver)
 	if err != nil {
 		log.Fatal().Err(err).Msg("fail to init product client")
 	}
-	orderClient, err := order.InitOrderClient(c.ConsulAddr, c.OrderServiceName, resolver)
+	orderClient, err := order.InitOrderClient(c.OrderServiceName, resolver)
 	if err != nil {
 		log.Fatal().Err(err).Msg("fail to init order client")
 

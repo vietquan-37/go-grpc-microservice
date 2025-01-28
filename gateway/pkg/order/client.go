@@ -2,7 +2,6 @@ package order
 
 import (
 	"common/discovery"
-	"common/discovery/consul"
 	"context"
 
 	"github.com/vietquan-37/gateway/pkg/order/pb"
@@ -12,11 +11,7 @@ type Client struct {
 	Client pb.OrderServiceClient
 }
 
-func InitOrderClient(consulAddr, serviceName, resolver string) (*Client, error) {
-	err := consul.RegisterConsulResolver(consulAddr)
-	if err != nil {
-		return nil, err
-	}
+func InitOrderClient(serviceName, resolver string) (*Client, error) {
 
 	conn, err := discovery.ServiceConnection(context.Background(), serviceName, resolver)
 	if err != nil {

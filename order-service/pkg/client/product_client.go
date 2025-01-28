@@ -2,7 +2,6 @@ package client
 
 import (
 	"common/discovery"
-	"common/discovery/consul"
 	"context"
 
 	"github.com/vietquan-37/order-service/pkg/pb"
@@ -17,11 +16,7 @@ type ProductClient struct {
 	client pb.ProductServiceClient
 }
 
-func InitProductClient(consulAddr string) (*ProductClient, error) {
-	err := consul.RegisterConsulResolver(consulAddr)
-	if err != nil {
-		return nil, err
-	}
+func InitProductClient() (*ProductClient, error) {
 
 	conn, err := discovery.ServiceConnection(context.Background(), serviceName, resolver)
 	if err != nil {

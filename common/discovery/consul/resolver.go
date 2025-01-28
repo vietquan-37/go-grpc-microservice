@@ -62,6 +62,7 @@ func (r *Resolver) watchConsul() {
 	}
 }
 
+// loadbalancing change and resolve  Immediate
 func (r *Resolver) ResolveNow(resolver.ResolveNowOptions) {
 	go r.resolve()
 }

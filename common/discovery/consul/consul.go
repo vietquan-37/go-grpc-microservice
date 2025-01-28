@@ -10,7 +10,7 @@ import (
 )
 
 type Registry struct {
-	client *consul.Client
+	Client *consul.Client
 }
 
 func NewRegistry(addr string) (*Registry, error) {
@@ -33,7 +33,7 @@ func (r *Registry) Register(instanceID, serviceName, hostPort string) error {
 		return err
 	}
 	host := parts[0]
-	return r.client.Agent().ServiceRegister(&consul.AgentServiceRegistration{
+	return r.Client.Agent().ServiceRegister(&consul.AgentServiceRegistration{
 		ID:      instanceID,
 		Name:    serviceName,
 		Port:    port,
@@ -48,13 +48,13 @@ func (r *Registry) Register(instanceID, serviceName, hostPort string) error {
 }
 func (r *Registry) Deregister(instanceID, serviceName string) {
 	log.Info().Msgf("Deregistering %s %s", instanceID, serviceName)
-	if err := r.client.Agent().ServiceDeregister(instanceID); err != nil {
+	if err := r.Client.Agent().ServiceDeregister(instanceID); err != nil {
 		log.Fatal().Err(err).Msg("fail deregister service: ")
 	}
 }
 
 func (r *Registry) HealthCheck(instanceID string) error {
-	return r.client.Agent().UpdateTTL(
+	return r.Client.Agent().UpdateTTL(
 		instanceID,
 		"online",
 		consul.HealthPassing,

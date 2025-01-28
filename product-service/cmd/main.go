@@ -61,10 +61,14 @@ func main() {
 		}
 
 	}()
+	err = consul.RegisterConsulResolver(registry.Client)
+	if err != nil {
+		log.Fatal().Err(err).Msg("fail to register consul resolver")
+	}
 	d := db.DbConn(c.DbSource)
 	r := NewRepoInit(d)
 	h := handler.NewProductHandler(r)
-	authClient, err := commonclient.InitAuthClient(c.ConsulAddr)
+	authClient, err := commonclient.InitAuthClient()
 	if err != nil {
 		log.Fatal().Err(err).Msg("fail to init auth client")
 	}

@@ -8,6 +8,7 @@ import (
 )
 
 func ServiceConnection(ctx context.Context, serviceName string, resolverName string) (*grpc.ClientConn, error) {
+	// triple slash for no authority
 	target := fmt.Sprintf("%s:///%s", resolverName, serviceName)
 	conn, err := grpc.DialContext(
 		ctx,

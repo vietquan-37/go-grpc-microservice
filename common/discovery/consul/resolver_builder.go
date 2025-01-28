@@ -13,17 +13,15 @@ type ResolverBuilder struct {
 	client *api.Client
 }
 
-func NewConsulResolverBuilder(consulAddr string) (*ResolverBuilder, error) {
-	config := api.DefaultConfig()
-	config.Address = consulAddr
-	client, err := api.NewClient(config)
-	if err != nil {
-		return nil, err
-	}
-	return &ResolverBuilder{client: client}, nil
+func NewResolverBuilder(client *api.Client) *ResolverBuilder {
+	return &ResolverBuilder{client: client}
 }
 
-func (b *ResolverBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
+func (b *ResolverBuilder) Build(
+	target resolver.Target,
+	cc resolver.ClientConn,
+	opts resolver.BuildOptions,
+) (resolver.Resolver, error) {
 	return NewConsulResolver(target.Endpoint(), cc, b.client), nil
 }
 
@@ -31,11 +29,8 @@ func (b *ResolverBuilder) Scheme() string {
 	return resolverName
 }
 
-func RegisterConsulResolver(consulAddr string) error {
-	builder, err := NewConsulResolverBuilder(consulAddr)
-	if err != nil {
-		return err
-	}
+func RegisterConsulResolver(client *api.Client) error {
+	builder := NewResolverBuilder(client)
 	resolver.Register(builder)
 	return nil
 }
