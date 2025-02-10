@@ -1,17 +1,25 @@
 version: '3.9'
 services:
-  
+  consul:
+    image: hashicorp/consul
+    command: agent -server -ui -node=server-1 -bootstrap-expect=1 -client=0.0.0.0
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    restart: always
   api-gateway:
     image: vietquandeptrai/api-gateway
     ports:
       - "6969:6969"
     environment:
+      - CONSUL_ADDR=consul:8500
       - GATEWAY_PORT=:6969
       - AUTH_URL=auth-svc:5051
       - PRODUCT_URL=product-svc:5052
       - ORDER_URL=order-svc:5054
     restart: always
     depends_on:
+      - consul
       - auth-svc
       - product-svc
       - order-svc
@@ -21,21 +29,25 @@ services:
     ports:
       - "5052:5052"
     environment:
+      - CONSUL_ADDR=consul:8500
       - DB_SOURCE=postgresql://postgres:12345@product-db:5432/product_db?sslmode=disable
       - GRPC_SERVER_ADDRESS=:5052
     restart: always
     depends_on:
+      - consul
       - product-db
   order-svc:
     image: vietquandeptrai/order-svc
     ports:
       - "5054:5054"
     environment:
+      - CONSUL_ADDR=consul:8500
       - DB_SOURCE=postgresql://postgres:12345@order-db:5432/order_db?sslmode=disable
       - GRPC_SERVER_ADDRESS=:5054
       - PRODUCT_URL=product-svc:5052
       - AUTH_URL=auth-svc:5051
     depends_on:
+      - consul
       - auth-svc
       - product-svc
       - order-db
@@ -45,6 +57,7 @@ services:
     ports:
       - "5051:5051"
     environment:
+      - CONSUL_ADDR=consul:8500
       - DB_SOURCE=postgresql://postgres:12345@auth-db:5432/auth_db?sslmode=disable
       - GRPC_SERVER_ADDRESS=:5051
       - JWT_SECRET=dmlldHF1YW5kZXB0cmFp
@@ -52,6 +65,7 @@ services:
       - ADMIN_PASSWORD=123
     restart: always
     depends_on:
+      - consul
       - auth-db
   auth-db:
     image: postgres:latest

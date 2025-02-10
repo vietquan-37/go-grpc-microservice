@@ -22,6 +22,7 @@ func (b *ResolverBuilder) Build(
 	cc resolver.ClientConn,
 	opts resolver.BuildOptions,
 ) (resolver.Resolver, error) {
+
 	return NewConsulResolver(target.Endpoint(), cc, b.client), nil
 }
 

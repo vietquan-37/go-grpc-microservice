@@ -43,7 +43,6 @@ func (r *Resolver) resolve() {
 		addr := fmt.Sprintf("%s:%d", service.Service.Address, service.Service.Port)
 		addresses = append(addresses, resolver.Address{Addr: addr})
 	}
-
 	if err := r.cc.UpdateState(resolver.State{Addresses: addresses}); err != nil {
 		log.Error().Err(err).Msg("Consul resolver update state failed")
 	}
@@ -64,6 +63,7 @@ func (r *Resolver) watchConsul() {
 
 // loadbalancing change and resolve  Immediate
 func (r *Resolver) ResolveNow(resolver.ResolveNowOptions) {
+
 	go r.resolve()
 }
 

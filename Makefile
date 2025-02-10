@@ -8,7 +8,7 @@ buf:
 	@if exist pb\*.go del /Q pb\*.go
 	buf generate
 docker-build:
-	cd gateway && docker build -t vietquandeptrai/api-gateway .
+	docker build -f ./gateway/Dockerfile -t vietquandeptrai/api-gateway .
 	docker build -f ./auth-service/Dockerfile -t  vietquandeptrai/auth-svc .
 	docker build -f ./product-service/Dockerfile -t vietquandeptrai/product-svc .
 	docker build -f ./order-service/Dockerfile -t vietquandeptrai/order-svc .
