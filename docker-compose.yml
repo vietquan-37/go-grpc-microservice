@@ -2,71 +2,86 @@ version: '3.9'
 services:
   consul:
     image: hashicorp/consul
-    command: agent -server -ui -node=server-1 -bootstrap-expect=1 -client=0.0.0.0
+    command: agent -server -ui -node=server-1 -bootstrap-expect=1 -client=0.0.0.0 
     ports:
       - "8500:8500"
       - "8600:8600/udp"
     restart: always
+    networks:
+      - microservice-go
   api-gateway:
+    container_name: gateway
     image: vietquandeptrai/api-gateway
     ports:
       - "6969:6969"
     environment:
       - CONSUL_ADDR=consul:8500
-      - GATEWAY_PORT=:6969
-      - AUTH_URL=auth-svc:5051
-      - PRODUCT_URL=product-svc:5052
-      - ORDER_URL=order-svc:5054
+      - GATEWAY_PORT=gateway:6969
+      - AUTH_SERVICE_NAME=auth
+      - PRODUCT_SERVICE_NAME=product
+      - ORDER_SERVICE_NAME=order
+      - SERVICE_NAME=gateway
     restart: always
     depends_on:
       - consul
       - auth-svc
       - product-svc
       - order-svc
-
+    networks:
+      - microservice-go
   product-svc:
+    container_name: product
     image: vietquandeptrai/product-svc
     ports:
       - "5052:5052"
     environment:
       - CONSUL_ADDR=consul:8500
       - DB_SOURCE=postgresql://postgres:12345@product-db:5432/product_db?sslmode=disable
-      - GRPC_SERVER_ADDRESS=:5052
+      - GRPC_SERVER_ADDRESS=product:5052
+      - SERVICE_NAME=product
     restart: always
     depends_on:
       - consul
       - product-db
+    networks:
+      - microservice-go
   order-svc:
+    container_name: order
     image: vietquandeptrai/order-svc
     ports:
       - "5054:5054"
     environment:
       - CONSUL_ADDR=consul:8500
       - DB_SOURCE=postgresql://postgres:12345@order-db:5432/order_db?sslmode=disable
-      - GRPC_SERVER_ADDRESS=:5054
-      - PRODUCT_URL=product-svc:5052
-      - AUTH_URL=auth-svc:5051
+      - GRPC_SERVER_ADDRESS=order:5054
+      - SERVICE_NAME=order
     depends_on:
       - consul
       - auth-svc
       - product-svc
       - order-db
     restart: always
+    networks:
+      - microservice-go
   auth-svc:
+    container_name: auth
     image: vietquandeptrai/auth-svc
     ports:
       - "5051:5051"
     environment:
       - CONSUL_ADDR=consul:8500
       - DB_SOURCE=postgresql://postgres:12345@auth-db:5432/auth_db?sslmode=disable
-      - GRPC_SERVER_ADDRESS=:5051
+      - GRPC_SERVER_ADDRESS=auth:5051
       - JWT_SECRET=dmlldHF1YW5kZXB0cmFp
       - ADMIN_USERNAME=bubakush20099@gmail.com
       - ADMIN_PASSWORD=123
+      - SERVICE_NAME=auth
     restart: always
     depends_on:
       - consul
       - auth-db
+    networks:
+      - microservice-go
   auth-db:
     image: postgres:latest
     environment:
@@ -77,6 +92,8 @@ services:
       - "5431:5432"
     volumes:
       - auth-data:/var/lib/postgresql/data
+    networks:
+      - microservice-go
   product-db:
     image: postgres:latest
     environment:
@@ -87,6 +104,8 @@ services:
       - "5430:5432"
     volumes:
       - product-data:/var/lib/postgresql/data
+    networks:
+      - microservice-go
 
   order-db:
     image: postgres:latest
@@ -98,8 +117,13 @@ services:
       - "5429:5432"
     volumes:
       - order-data:/var/lib/postgresql/data
+    networks:
+      - microservice-go
 
 
+networks:
+  microservice-go:
+    driver: bridge
 volumes:
   auth-data:
   product-data:

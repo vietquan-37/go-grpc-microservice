@@ -1,6 +1,54 @@
 {
   "lockfile_version": "1",
   "packages": {
+    "buf@1.46.0": {
+      "last_modified": "2024-11-10T13:26:24Z",
+      "resolved": "github:NixOS/nixpkgs/aebe249544837ce42588aa4b2e7972222ba12e8f#buf",
+      "source": "devbox-search",
+      "version": "1.46.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/p3mm5fyr8jmv7ygsp32sxrvs23l3bpma-buf-1.46.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/p3mm5fyr8jmv7ygsp32sxrvs23l3bpma-buf-1.46.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/zn39bf7q99m0dqirada8ml6hkg9ss3fq-buf-1.46.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/zn39bf7q99m0dqirada8ml6hkg9ss3fq-buf-1.46.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/fwaassbwz0ahd68rf1k05h4fmwcj3186-buf-1.46.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/fwaassbwz0ahd68rf1k05h4fmwcj3186-buf-1.46.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/i4v300g8kp75ksbyyq40ynx7576141aj-buf-1.46.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/i4v300g8kp75ksbyyq40ynx7576141aj-buf-1.46.0"
+        }
+      }
+    },
     "docker@latest": {
       "last_modified": "2025-01-31T04:26:24Z",
       "resolved": "github:NixOS/nixpkgs/9189ac18287c599860e878e905da550aa6dec1cd#docker",
@@ -48,6 +96,9 @@
           "store_path": "/nix/store/jnzrrks201f2abb205zs0n5dddj7az9r-docker-27.5.1"
         }
       }
+    },
+    "github:NixOS/nixpkgs/nixpkgs-unstable": {
+      "resolved": "github:NixOS/nixpkgs/1dcdd535fef84d4671129a10e7072d56dca9a4d3?lastModified=1739667012&narHash=sha256-6QWdUgz2O2Mm%2BpYx%2FAYB4Rot5%2Fs1OR1C6bt30TI81yY%3D"
     },
     "go@1.23.1": {
       "last_modified": "2024-09-10T15:01:03Z",

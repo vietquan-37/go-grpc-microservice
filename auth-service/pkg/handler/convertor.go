@@ -17,6 +17,7 @@ func convertUser(req *pb.CreateUserRequest) *model.User {
 }
 
 func convertUserResponse(user *model.User) *pb.UserResponse {
+
 	return &pb.UserResponse{
 		UserId:      int32(user.ID),
 		UserName:    user.PhoneNumber,

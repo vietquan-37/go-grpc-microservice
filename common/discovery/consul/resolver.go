@@ -33,6 +33,7 @@ func (r *Resolver) resolve() {
 	defer r.mu.Unlock()
 
 	services, _, err := r.client.Health().Service(r.serviceName, "", true, nil)
+
 	if err != nil {
 		log.Error().Err(err).Msg("Consul resolver get services failed")
 		return
@@ -40,11 +41,14 @@ func (r *Resolver) resolve() {
 
 	var addresses []resolver.Address
 	for _, service := range services {
-		addr := fmt.Sprintf("%s:%d", service.Service.Address, service.Service.Port)
+
+		addr := fmt.Sprintf("%s:%d", service.Service.Port, service.Service.Port)
 		addresses = append(addresses, resolver.Address{Addr: addr})
 	}
+
 	if err := r.cc.UpdateState(resolver.State{Addresses: addresses}); err != nil {
-		log.Error().Err(err).Msg("Consul resolver update state failed")
+		//log.Error().Err(err).Msg("Consul resolver update state failed")
+		return
 	}
 }
 

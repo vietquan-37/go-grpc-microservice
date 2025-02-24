@@ -58,7 +58,7 @@ func main() {
 			if err := registry.HealthCheck(instanceId); err != nil {
 				log.Fatal().Err(err).Msg("failed to health check service")
 			}
-			time.Sleep(5 * time.Second)
+			time.Sleep(1 * time.Second)
 		}
 
 	}()

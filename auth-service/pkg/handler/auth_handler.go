@@ -87,7 +87,6 @@ func (handler *Handler) GetOneUser(ctx context.Context, req *pb.GetOneUserReques
 	return rsp, nil
 }
 func (handler *Handler) Validate(ctx context.Context, req *pb.ValidateRequest) (*pb.ValidateResponse, error) {
-	//time.Sleep(10 * time.Second)
 	claims, err := handler.Jwt.ValidateToken(req.GetToken())
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, err.Error())
