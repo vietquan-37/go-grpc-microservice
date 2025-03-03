@@ -1,4 +1,4 @@
-PHONY: run-all  buf
+PHONY: run-all  buf docker-push docker-build postgres createdb
 run-all:
 	cd auth-service && start /b make run-server
 	cd order-service && start /b make run-server
@@ -17,6 +17,9 @@ docker-push:
 	cd auth-service && docker push vietquandeptrai/auth-svc
 	cd product-service && docker push vietquandeptrai/product-svc
 	cd order-service && docker push vietquandeptrai/order-svc
-
+postgres:
+	@docker run --name auth-db -p 5431:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=12345 -d postgres
+createdb:
+	@docker exec -it auth-db createdb --username=postgres --owner=postgres auth_db
 
 

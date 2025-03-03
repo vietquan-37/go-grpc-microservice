@@ -1,5 +1,9 @@
 go 1.23.1
 
 use (
-
+./gateway
+./product-service
+./auth-service
+./common
+./order-service
 )

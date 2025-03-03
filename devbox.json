@@ -1,19 +1,18 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.7/.schema/devbox.schema.json",
   "packages": [
-    "go@1.23.1",
     "docker@latest",
-    "buf@1.46.0"
-
+    "buf@1.50.0",
+    "./flake.nix#go"
   ],
   "shell": {
     "init_hook": [
-      "docker compose up",
       "echo 'Welcome to devbox!' > /dev/null"
     ],
     "scripts": {
       "test": [
-        "echo \"Error: no test specified\" && exit 1"
+        "go version",
+        "docker version"
       ]
     }
   }

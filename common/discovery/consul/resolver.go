@@ -42,7 +42,7 @@ func (r *Resolver) resolve() {
 	var addresses []resolver.Address
 	for _, service := range services {
 
-		addr := fmt.Sprintf("%s:%d", service.Service.Port, service.Service.Port)
+		addr := fmt.Sprintf("%s:%d", service.Service.Address, service.Service.Port)
 		addresses = append(addresses, resolver.Address{Addr: addr})
 	}
 

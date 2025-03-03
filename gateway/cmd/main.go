@@ -9,10 +9,12 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/gateway/pkg/auth"
 	"github.com/vietquan-37/gateway/pkg/config"
+	"github.com/vietquan-37/gateway/pkg/middleware"
 	"github.com/vietquan-37/gateway/pkg/order"
 	"github.com/vietquan-37/gateway/pkg/order/pb"
 	"github.com/vietquan-37/gateway/pkg/product"
 	productpb "github.com/vietquan-37/gateway/pkg/product/pb"
+	"github.com/vietquan-37/gateway/pkg/ratelimiter"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/encoding/protojson"
 	"net/http"
@@ -99,8 +101,13 @@ func main() {
 	if err = pb.RegisterOrderServiceHandlerClient(context.Background(), mux, orderClient.Client); err != nil {
 		log.Fatal().Err(err).Msg("fail to register order client:")
 	}
+	rateLimiter := ratelimiter.NewFixedWindowRateLimiter(
+		c.RequestPerTimeFrame,
+		time.Second*5)
+
+	rlMiddleware := middleware.NewRateLimiterMiddleware(rateLimiter)
 	httpServer := &http.Server{
-		Handler: mux,
+		Handler: rlMiddleware.RateLimitMiddleware(mux),
 		Addr:    c.GatewayPort,
 	}
 	waitGroup, ctx := errgroup.WithContext(ctx)

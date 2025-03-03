@@ -1,51 +1,51 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "buf@1.46.0": {
-      "last_modified": "2024-11-10T13:26:24Z",
-      "resolved": "github:NixOS/nixpkgs/aebe249544837ce42588aa4b2e7972222ba12e8f#buf",
+    "buf@1.50.0": {
+      "last_modified": "2025-02-07T11:26:36Z",
+      "resolved": "github:NixOS/nixpkgs/d98abf5cf5914e5e4e9d57205e3af55ca90ffc1d#buf",
       "source": "devbox-search",
-      "version": "1.46.0",
+      "version": "1.50.0",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/p3mm5fyr8jmv7ygsp32sxrvs23l3bpma-buf-1.46.0",
+              "path": "/nix/store/z3zh7ik0234jjzmzrf8s75jcn4bl7iln-buf-1.50.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/p3mm5fyr8jmv7ygsp32sxrvs23l3bpma-buf-1.46.0"
+          "store_path": "/nix/store/z3zh7ik0234jjzmzrf8s75jcn4bl7iln-buf-1.50.0"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/zn39bf7q99m0dqirada8ml6hkg9ss3fq-buf-1.46.0",
+              "path": "/nix/store/drp9ix6dppvlb83ys2q4127gsccjqw5y-buf-1.50.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/zn39bf7q99m0dqirada8ml6hkg9ss3fq-buf-1.46.0"
+          "store_path": "/nix/store/drp9ix6dppvlb83ys2q4127gsccjqw5y-buf-1.50.0"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/fwaassbwz0ahd68rf1k05h4fmwcj3186-buf-1.46.0",
+              "path": "/nix/store/jmk9rp189ab0q7g1lk2w32mn54iczq4b-buf-1.50.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/fwaassbwz0ahd68rf1k05h4fmwcj3186-buf-1.46.0"
+          "store_path": "/nix/store/jmk9rp189ab0q7g1lk2w32mn54iczq4b-buf-1.50.0"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/i4v300g8kp75ksbyyq40ynx7576141aj-buf-1.46.0",
+              "path": "/nix/store/a8lkf21x673b56wap5yi53g7p4138w98-buf-1.50.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/i4v300g8kp75ksbyyq40ynx7576141aj-buf-1.46.0"
+          "store_path": "/nix/store/a8lkf21x673b56wap5yi53g7p4138w98-buf-1.50.0"
         }
       }
     },
