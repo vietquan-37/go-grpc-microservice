@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	AuthService_Register_FullMethodName   = "/pb.AuthService/Register"
-	AuthService_Login_FullMethodName      = "/pb.AuthService/Login"
-	AuthService_GetOneUser_FullMethodName = "/pb.AuthService/GetOneUser"
+	AuthService_Register_FullMethodName    = "/pb.AuthService/Register"
+	AuthService_Login_FullMethodName       = "/pb.AuthService/Login"
+	AuthService_GoogleLogin_FullMethodName = "/pb.AuthService/GoogleLogin"
+	AuthService_GetOneUser_FullMethodName  = "/pb.AuthService/GetOneUser"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -30,6 +31,7 @@ const (
 type AuthServiceClient interface {
 	Register(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	GoogleLogin(ctx context.Context, in *GoogleLoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	GetOneUser(ctx context.Context, in *GetOneUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 }
 
@@ -59,6 +61,15 @@ func (c *authServiceClient) Login(ctx context.Context, in *LoginRequest, opts ..
 	return out, nil
 }
 
+func (c *authServiceClient) GoogleLogin(ctx context.Context, in *GoogleLoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+	out := new(LoginResponse)
+	err := c.cc.Invoke(ctx, AuthService_GoogleLogin_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServiceClient) GetOneUser(ctx context.Context, in *GetOneUserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
 	out := new(UserResponse)
 	err := c.cc.Invoke(ctx, AuthService_GetOneUser_FullMethodName, in, out, opts...)
@@ -74,6 +85,7 @@ func (c *authServiceClient) GetOneUser(ctx context.Context, in *GetOneUserReques
 type AuthServiceServer interface {
 	Register(context.Context, *CreateUserRequest) (*UserResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	GoogleLogin(context.Context, *GoogleLoginRequest) (*LoginResponse, error)
 	GetOneUser(context.Context, *GetOneUserRequest) (*UserResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
@@ -87,6 +99,9 @@ func (UnimplementedAuthServiceServer) Register(context.Context, *CreateUserReque
 }
 func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedAuthServiceServer) GoogleLogin(context.Context, *GoogleLoginRequest) (*LoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GoogleLogin not implemented")
 }
 func (UnimplementedAuthServiceServer) GetOneUser(context.Context, *GetOneUserRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOneUser not implemented")
@@ -140,6 +155,24 @@ func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_GoogleLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GoogleLoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GoogleLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GoogleLogin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GoogleLogin(ctx, req.(*GoogleLoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_GetOneUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetOneUserRequest)
 	if err := dec(in); err != nil {
@@ -172,6 +205,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _AuthService_Login_Handler,
+		},
+		{
+			MethodName: "GoogleLogin",
+			Handler:    _AuthService_GoogleLogin_Handler,
 		},
 		{
 			MethodName: "GetOneUser",

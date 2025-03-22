@@ -9,10 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
-	"sync"
 )
-
-var wait sync.WaitGroup
 
 type ProductHandler struct {
 	pb.UnimplementedProductServiceServer
@@ -72,7 +69,7 @@ func (h *ProductHandler) DecreaseProductStock(ctx context.Context, req *pb.Decre
 	}, nil
 }
 func (h *ProductHandler) FindOneProduct(ctx context.Context, req *pb.ProductRequest) (*pb.ProductResponse, error) {
-	//time.Sleep(5 * time.Second)
+
 	product, err := h.Repo.FindProduct(req.GetId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -81,12 +78,6 @@ func (h *ProductHandler) FindOneProduct(ctx context.Context, req *pb.ProductRequ
 		return nil, status.Errorf(codes.Internal, "error while finding product : %s", err.Error())
 	}
 	rsp := convertToProductResponse(product)
-	//wait.Add(1)
-	//go func() {
-	//	defer wait.Done()
-	//	time.Sleep(5 * time.Second)
-	//	log.Println("email have been sent")
-	//}()
 	return rsp, nil
 }
 func (h *ProductHandler) FindAllProduct(ctx context.Context, req *emptypb.Empty) (*pb.ProductResponseList, error) {

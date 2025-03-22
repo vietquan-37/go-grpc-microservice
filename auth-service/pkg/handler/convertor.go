@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/vietquan-37/auth-service/pkg/model"
 	"github.com/vietquan-37/auth-service/pkg/model/enum"
+	"github.com/vietquan-37/auth-service/pkg/oauth2"
 	"github.com/vietquan-37/auth-service/pkg/pb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -31,4 +33,12 @@ func convertValidate(user *model.User) *pb.ValidateResponse {
 	return &pb.ValidateResponse{
 		User: convertUserResponse(user),
 	}
+}
+func convertUserInfo(response *oauth2.GoogleUserResponse) *model.User {
+	return &model.User{
+		Username: response.Email,
+		FullName: fmt.Sprintf("%s %s", response.FamilyName, response.GivenName),
+		Role:     enum.UserRole,
+	}
+
 }

@@ -3,7 +3,8 @@
   "packages": [
     "docker@latest",
     "buf@1.50.0",
-    "./flake.nix#go"
+    "path:./#go_1_11_1"
+
   ],
   "shell": {
     "init_hook": [

@@ -3,7 +3,10 @@ package handler
 import (
 	"context"
 	"errors"
+	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/auth-service/pkg/config"
+	"github.com/vietquan-37/auth-service/pkg/oauth2"
+
 	"github.com/vietquan-37/auth-service/pkg/pb"
 	"github.com/vietquan-37/auth-service/pkg/repository"
 	"google.golang.org/grpc/codes"
@@ -14,14 +17,16 @@ import (
 
 type Handler struct {
 	pb.UnimplementedAuthServiceServer
-	Jwt  config.JwtWrapper
-	Repo repository.IAuthRepo
+	Jwt    config.JwtWrapper
+	Repo   repository.IAuthRepo
+	Config config.Config
 }
 
-func NewAuthHandler(jwt config.JwtWrapper, repo repository.IAuthRepo) *Handler {
+func NewAuthHandler(jwt config.JwtWrapper, repo repository.IAuthRepo, config config.Config) *Handler {
 	return &Handler{
-		Jwt:  jwt,
-		Repo: repo,
+		Jwt:    jwt,
+		Repo:   repo,
+		Config: config,
 	}
 }
 func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest) (*pb.UserResponse, error) {
@@ -99,4 +104,47 @@ func (handler *Handler) Validate(ctx context.Context, req *pb.ValidateRequest) (
 		return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
 	}
 	return convertValidate(user), nil
+}
+func (handler *Handler) GoogleLogin(ctx context.Context, req *pb.GoogleLoginRequest) (*pb.LoginResponse, error) {
+	rsp, err := oauth2.ExchangeToken(oauth2.ExchangeTokenRequest{
+		Code:         req.GetCode(),
+		ClientId:     handler.Config.ClientId,
+		ClientSecret: handler.Config.ClientSecret,
+		GrantType:    handler.Config.GrantType,
+		RedirectUri:  handler.Config.RedirectUri,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while exchanging token: %v", err)
+	}
+	info, err := oauth2.GetUserInfo("json", rsp.AccessToken)
+	log.Info().Msgf("info : %v", info)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while retrieving user info: %v", err)
+	}
+
+	user, err := handler.Repo.GetUserByUserName(info.Email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			user, err = handler.Repo.CreateUser(convertUserInfo(info))
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "error while creating user: %v", err)
+			}
+
+		} else {
+			return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
+		}
+	}
+	accessToken, err := handler.Jwt.GenerateJWT(user, time.Hour)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while generating token: %v", err)
+	}
+	refreshToken, err := handler.Jwt.GenerateJWT(user, time.Hour*5)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while generating token: %v", err)
+	}
+	return &pb.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+
 }

@@ -120,6 +120,17 @@ services:
     networks:
       - microservice-go
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx-reverse-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api-gateway
+    networks:
+      - microservice-go
 
 networks:
   microservice-go:
@@ -128,4 +139,6 @@ volumes:
   auth-data:
   product-data:
   order-data:
+
+
 

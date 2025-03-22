@@ -12,6 +12,10 @@ type Config struct {
 	AdminUserName     string `mapstructure:"ADMIN_USERNAME"`
 	AdminPassword     string `mapstructure:"ADMIN_PASSWORD"`
 	ConsulAddress     string `mapstructure:"CONSUL_ADDR"`
+	ClientId          string `mapstructure:"CLIENT_ID"`
+	ClientSecret      string `mapstructure:"CLIENT_SECRET"`
+	GrantType         string `mapstructure:"GRANT_TYPE"`
+	RedirectUri       string `mapstructure:"REDIRECT_URI"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

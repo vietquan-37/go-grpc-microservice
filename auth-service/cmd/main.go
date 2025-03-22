@@ -64,7 +64,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load jwt secret: ")
 	}
-	h := handler.NewAuthHandler(*jwtMaker, repo)
+	h := handler.NewAuthHandler(*jwtMaker, repo, *c)
 	validateInterceptor, err := validate.NewValidationInterceptor()
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create validator interceptor:")

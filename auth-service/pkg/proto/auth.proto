@@ -32,9 +32,13 @@ message LoginResponse{
     string access_token=1;
     string refresh_token=2;
 }
+message GoogleLoginRequest{
+    string code=1;
+}
 service AuthService{
     rpc Register(CreateUserRequest)returns(UserResponse){}
     rpc Login(LoginRequest)returns(LoginResponse){}
+    rpc GoogleLogin(GoogleLoginRequest)returns(LoginResponse){}
     rpc GetOneUser(GetOneUserRequest)returns(UserResponse){}
     rpc Validate(ValidateRequest)returns(ValidateResponse){}
 }

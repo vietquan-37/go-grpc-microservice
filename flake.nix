@@ -1,38 +1,30 @@
 {
-  description = "Custom Go 1.11.1 package for Devbox";
+  description = "Local Flake for Go 1.11.1 and protoc-gen-go";
 
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-21.11";
-    flake-utils.url = "github:numtide/flake-utils";
-    go-src = {
-      url = "https://dl.google.com/go/go1.11.1.src.tar.gz";
-      flake = false;
-      narHash = "sha256-+5LJQV1+lwj8sJt3aCIY6QipYbJ0D2cD5vPqMefDuTk=";
-    };
-  };
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-20.03";
 
-  outputs = { self, nixpkgs, flake-utils, go-src }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs { inherit system; };
-        goPackage = pkgs.stdenv.mkDerivation {
-          name = "go-1.11.1";
-          src = go-src;
-          buildInputs = [ pkgs.go ];
-          buildPhase = ''
-            export GOROOT_BOOTSTRAP=${pkgs.go}/share/go
-            cd src
-            ./make.bash
-          '';
-          installPhase = ''
-            mkdir -p $out/bin
-            cp -r bin/* $out/bin/
-          '';
+  outputs = { self, nixpkgs }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs { inherit system; };
+    in {
+      packages = {
+        x86_64-linux = {
+          go_1_11_1 = pkgs.stdenv.mkDerivation rec {
+            pname = "go";
+            version = "1.11.1";
+
+            src = pkgs.fetchurl {
+              url = "https://dl.google.com/go/go1.11.1.linux-amd64.tar.gz";
+              sha256 = "sha256-KHEnDY/wyMafFhqq5C+fKHOYVf9cUgR1Ko2Socn2OZM=";
+            };
+
+            installPhase = ''
+              mkdir -p $out
+              tar -C $out -xzf $src --strip-components=1
+            '';
+          };
         };
-      in
-      {
-        packages.default = goPackage;
-        packages.go = goPackage;
-      }
-    );
+      };
+    };
 }
