@@ -134,5 +134,5 @@ func main() {
 	if err := waitGroup.Wait(); err != nil {
 		log.Error().Err(err).Msg("fail to wait for http server")
 	}
-	// graceful shutdown
+
 }

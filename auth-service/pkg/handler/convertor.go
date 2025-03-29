@@ -11,7 +11,8 @@ import (
 
 func convertUser(req *pb.CreateUserRequest) *model.User {
 	return &model.User{
-		Username:    req.UserName,
+		Username:    req.GetUserName(),
+		FullName:    req.GetFullName(),
 		Password:    req.GetPassword(),
 		PhoneNumber: req.GetPhoneNumber(),
 		Role:        enum.UserRole,
@@ -22,7 +23,8 @@ func convertUserResponse(user *model.User) *pb.UserResponse {
 
 	return &pb.UserResponse{
 		UserId:      int32(user.ID),
-		UserName:    user.PhoneNumber,
+		UserName:    user.Username,
+		FullName:    user.FullName,
 		PhoneNumber: user.PhoneNumber,
 		Role:        string(user.Role),
 		CreateAt:    timestamppb.New(user.CreatedAt),

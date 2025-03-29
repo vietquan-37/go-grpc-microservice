@@ -5,7 +5,9 @@ import (
 	"errors"
 	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/auth-service/pkg/config"
+	"github.com/vietquan-37/auth-service/pkg/email"
 	"github.com/vietquan-37/auth-service/pkg/oauth2"
+	"sync"
 
 	"github.com/vietquan-37/auth-service/pkg/pb"
 	"github.com/vietquan-37/auth-service/pkg/repository"
@@ -17,16 +19,20 @@ import (
 
 type Handler struct {
 	pb.UnimplementedAuthServiceServer
-	Jwt    config.JwtWrapper
-	Repo   repository.IAuthRepo
-	Config config.Config
+	wg          *sync.WaitGroup
+	Jwt         config.JwtWrapper
+	Repo        repository.IAuthRepo
+	Config      config.Config
+	MailService *email.MailService
 }
 
-func NewAuthHandler(jwt config.JwtWrapper, repo repository.IAuthRepo, config config.Config) *Handler {
+func NewAuthHandler(jwt config.JwtWrapper, repo repository.IAuthRepo, config config.Config, mailService *email.MailService, wait *sync.WaitGroup) *Handler {
 	return &Handler{
-		Jwt:    jwt,
-		Repo:   repo,
-		Config: config,
+		Jwt:         jwt,
+		Repo:        repo,
+		Config:      config,
+		wg:          wait,
+		MailService: mailService,
 	}
 }
 func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest) (*pb.UserResponse, error) {
@@ -45,6 +51,15 @@ func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest)
 		}
 		return nil, status.Errorf(codes.Internal, "error while creating user: %s", err)
 	}
+	handler.wg.Add(1)
+	go func() {
+		//for testing purpose
+		time.Sleep(time.Second * 5)
+		defer handler.wg.Done()
+		if err := handler.MailService.SendWelcomeEmail(user.Username, user.FullName); err != nil {
+			log.Error().Err(err).Msg("error while sending welcome email")
+		}
+	}()
 
 	return convertUserResponse(user), nil
 }

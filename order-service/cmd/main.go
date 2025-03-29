@@ -17,7 +17,6 @@ import (
 	"github.com/vietquan-37/order-service/pkg/handler"
 	"github.com/vietquan-37/order-service/pkg/pb"
 	"github.com/vietquan-37/order-service/pkg/repo"
-	"golang.org/x/sync/errgroup"
 	"os"
 	"os/signal"
 	"syscall"
@@ -97,26 +96,18 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot start to server:")
 	}
-	waitGroup, ctx := errgroup.WithContext(ctx)
 
-	waitGroup.Go(func() error {
+	go func() {
 		log.Info().Msgf("start  gRPC server server at %s", lis.Addr().String())
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Error().Err(err).Msg("fail to serve server:")
-			return err
+
 		}
-		return nil
-	})
-	waitGroup.Go(func() error {
-		<-ctx.Done()
-		log.Info().Msgf("stop  gRPC server server at %s", lis.Addr().String())
-		grpcServer.GracefulStop()
-		log.Info().Msg("stopped gRPC server server")
-		return nil
-	})
-	if err := waitGroup.Wait(); err != nil {
-		log.Fatal().Err(err).Msg("cannot wait for server:")
-	}
+	}()
+	<-ctx.Done()
+	log.Info().Msgf("stop  gRPC server server at %s", lis.Addr().String())
+	grpcServer.GracefulStop()
+	log.Info().Msg("stopped gRPC server server")
 }
 func InitOrderRepo(db *gorm.DB) repo.IOrderRepo {
 	return repo.NewOrderRepo(db)

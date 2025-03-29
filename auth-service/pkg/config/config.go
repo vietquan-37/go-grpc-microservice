@@ -16,6 +16,10 @@ type Config struct {
 	ClientSecret      string `mapstructure:"CLIENT_SECRET"`
 	GrantType         string `mapstructure:"GRANT_TYPE"`
 	RedirectUri       string `mapstructure:"REDIRECT_URI"`
+	EmailUsername     string `mapstructure:"EMAIL_USERNAME"`
+	SMTPHost          string `mapstructure:"SMTP_HOST"`
+	SMTPPort          string `mapstructure:"SMTP_PORT"`
+	EmailPassword     string `mapstructure:"EMAIL_PASSWORD"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

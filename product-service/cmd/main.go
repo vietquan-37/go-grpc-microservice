@@ -10,9 +10,7 @@ import (
 	"common/routes"
 	"common/validate"
 	"context"
-	"errors"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/sync/errgroup"
 	"os"
 	"os/signal"
 	"syscall"
@@ -92,30 +90,16 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("fail to listen to server:")
 	}
-	waitGroup, ctx := errgroup.WithContext(ctx)
-	waitGroup.Go(func() error {
-		log.Info().Msgf("start  gRPC server server at %s", lis.Addr().String())
+	go func() {
+		log.Info().Msgf("Starting gRPC server at %s", lis.Addr().String())
 		if err := grpcServer.Serve(lis); err != nil {
-			if errors.Is(err, grpc.ErrServerStopped) {
-				return err
-			}
-			log.Error().Err(err).Msg("fail to serve  server:")
-			return nil
+			log.Fatal().Err(err).Msg("gRPC server failed")
 		}
-		return nil
-	})
-	waitGroup.Go(func() error {
-		<-ctx.Done()
-		log.Info().Msgf("shutting down gRPC server server at: %s", lis.Addr().String())
-
-		grpcServer.GracefulStop()
-		log.Info().Msgf("server stopped")
-		return nil
-	})
-	if err := waitGroup.Wait(); err != nil {
-		log.Fatal().Err(err).Msg("fail to wait for gRPC server:")
-	}
-
+	}()
+	<-ctx.Done()
+	log.Info().Msg("Shutting down server...")
+	grpcServer.GracefulStop()
+	log.Info().Msg("Server stopped gracefully")
 }
 func NewRepoInit(db *gorm.DB) repo.IProductRepo {
 	return repo.NewProductRepo(db)
