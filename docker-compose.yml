@@ -10,17 +10,16 @@ services:
     networks:
       - microservice-go
   api-gateway:
-    container_name: gateway
     image: vietquandeptrai/api-gateway
     ports:
       - "6969:6969"
     environment:
       - CONSUL_ADDR=consul:8500
-      - GATEWAY_PORT=gateway:6969
-      - AUTH_SERVICE_NAME=auth
-      - PRODUCT_SERVICE_NAME=product
-      - ORDER_SERVICE_NAME=order
-      - SERVICE_NAME=gateway
+      - GATEWAY_PORT=api-gateway:6969
+      - AUTH_SERVICE_NAME=auth-svc
+      - PRODUCT_SERVICE_NAME=product-svc
+      - ORDER_SERVICE_NAME=order-svc
+      - SERVICE_NAME=api-gateway
     restart: always
     depends_on:
       - consul
@@ -30,15 +29,15 @@ services:
     networks:
       - microservice-go
   product-svc:
-    container_name: product
     image: vietquandeptrai/product-svc
-    ports:
-      - "5052:5052"
+
     environment:
       - CONSUL_ADDR=consul:8500
       - DB_SOURCE=postgresql://postgres:12345@product-db:5432/product_db?sslmode=disable
-      - GRPC_SERVER_ADDRESS=product:5052
-      - SERVICE_NAME=product
+      - GRPC_SERVER_ADDRESS=product-svc:5052
+      - SERVICE_NAME=product-svc
+      - AUTH_SERVICE_NAME=auth-svc
+
     restart: always
     depends_on:
       - consul
@@ -46,15 +45,16 @@ services:
     networks:
       - microservice-go
   order-svc:
-    container_name: order
     image: vietquandeptrai/order-svc
     ports:
       - "5054:5054"
     environment:
       - CONSUL_ADDR=consul:8500
       - DB_SOURCE=postgresql://postgres:12345@order-db:5432/order_db?sslmode=disable
-      - GRPC_SERVER_ADDRESS=order:5054
-      - SERVICE_NAME=order
+      - GRPC_SERVER_ADDRESS=order-svc:5054
+      - SERVICE_NAME=order-svc
+      - AUTH_SERVICE_NAME=auth
+      - PRODUCT_SERVICE_NAME=product-svc
     depends_on:
       - consul
       - auth-svc
@@ -64,18 +64,17 @@ services:
     networks:
       - microservice-go
   auth-svc:
-    container_name: auth
     image: vietquandeptrai/auth-svc
     ports:
       - "5051:5051"
     environment:
       - CONSUL_ADDR=consul:8500
       - DB_SOURCE=postgresql://postgres:12345@auth-db:5432/auth_db?sslmode=disable
-      - GRPC_SERVER_ADDRESS=auth:5051
+      - GRPC_SERVER_ADDRESS=auth-svc:5051
       - JWT_SECRET=dmlldHF1YW5kZXB0cmFp
       - ADMIN_USERNAME=bubakush20099@gmail.com
       - ADMIN_PASSWORD=123
-      - SERVICE_NAME=auth
+      - SERVICE_NAME=auth-svc
     restart: always
     depends_on:
       - consul

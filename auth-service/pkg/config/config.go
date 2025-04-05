@@ -20,6 +20,7 @@ type Config struct {
 	SMTPHost          string `mapstructure:"SMTP_HOST"`
 	SMTPPort          string `mapstructure:"SMTP_PORT"`
 	EmailPassword     string `mapstructure:"EMAIL_PASSWORD"`
+	Resolve           bool   `mapstructure:"RESOLVE"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

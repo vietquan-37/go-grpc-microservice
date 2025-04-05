@@ -12,6 +12,7 @@ type Config struct {
 	ServiceName         string `mapstructure:"SERVICE_NAME"`
 	ConsulAddr          string `mapstructure:"CONSUL_ADDR"`
 	RequestPerTimeFrame int    `mapstructure:"REQUEST_PER_TIME_FRAME"`
+	Resolve             bool   `mapstructure:"RESOLVE"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

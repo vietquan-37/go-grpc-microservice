@@ -8,6 +8,7 @@ import (
 	"common/loggers"
 	"common/mtdt"
 	"common/routes"
+	"common/timeout"
 	"common/validate"
 	"context"
 	"github.com/rs/zerolog/log"
@@ -47,7 +48,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to connect to consul")
 	}
 	instanceId := discovery.GenerateInstanceID(c.ServiceName)
-	if err := registry.Register(instanceId, c.ServiceName, c.GrpcServerAddress); err != nil {
+	if err := registry.Register(instanceId, c.ServiceName, c.GrpcServerAddress, c.Resolve); err != nil {
 		log.Fatal().Err(err).Msg("failed to register service")
 	}
 	go func() {
@@ -65,11 +66,11 @@ func main() {
 	}
 	d := db.DbConn(c.DbSource)
 	orderRepo := InitOrderRepo(d)
-	productClient, err := client.InitProductClient()
+	productClient, err := client.InitProductClient(c.ProductServiceName)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot init product client")
 	}
-	authClient, err := commonclient.InitAuthClient()
+	authClient, err := commonclient.InitAuthClient(c.AuthServiceName)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot init auth client")
 	}
@@ -81,13 +82,14 @@ func main() {
 
 	roles := routes.AccessibleRoles
 	authInterceptor := interceptor.NewAuthInterceptor(authClient, roles())
-
+	durations := time.Second * 6
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			loggers.GrpcLoggerInterceptor,
 			mtdt.ForwardMetadataUnaryServerInterceptor(),
 			authInterceptor.UnaryAuthInterceptor(),
 			validateInterceptor.ValidateInterceptor(),
+			timeout.UnaryTimeoutInterceptor(durations),
 		),
 	)
 	pb.RegisterOrderServiceServer(grpcServer, h)

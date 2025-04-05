@@ -44,14 +44,18 @@ func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest)
 	req.Password = hashPassword
 	model := convertUser(req)
 
-	user, err := handler.Repo.CreateUser(model)
+	user, err := handler.Repo.CreateUser(ctx, model)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return nil, status.Errorf(codes.AlreadyExists, "email %s already register before", req.UserName)
 		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, status.Errorf(codes.DeadlineExceeded, "Request timeout: %v", err)
+		}
 		return nil, status.Errorf(codes.Internal, "error while creating user: %s", err)
 	}
 	handler.wg.Add(1)
+	// opening new thread
 	go func() {
 		//for testing purpose
 		time.Sleep(time.Second * 5)
@@ -64,13 +68,13 @@ func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest)
 	return convertUserResponse(user), nil
 }
 func (handler *Handler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-
-	user, err := handler.Repo.GetUserByUserName(req.GetUserName())
+	user, err := handler.Repo.GetUserByUserName(ctx, req.GetUserName())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-
 			return nil, status.Errorf(codes.NotFound, "user with email %s not found", req.GetUserName())
-
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, status.Errorf(codes.DeadlineExceeded, "Request timeout: %v", err)
 		}
 		return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
 	}
@@ -90,15 +94,18 @@ func (handler *Handler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Lo
 	rsp := &pb.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+		UserId:       int32(user.ID),
 	}
 	return rsp, nil
 }
 func (handler *Handler) GetOneUser(ctx context.Context, req *pb.GetOneUserRequest) (*pb.UserResponse, error) {
-
-	user, err := handler.Repo.FindOneUser(req.GetId())
+	user, err := handler.Repo.FindOneUser(ctx, req.GetId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "user with id %d not found", req.GetId())
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, status.Errorf(codes.DeadlineExceeded, "Request timeout: %v", err)
 		}
 		return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
 	}
@@ -111,10 +118,13 @@ func (handler *Handler) Validate(ctx context.Context, req *pb.ValidateRequest) (
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
-	user, err := handler.Repo.FindOneUser(claims.Id)
+	user, err := handler.Repo.FindOneUser(ctx, claims.Id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "user with id %d not found", claims.Id)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, status.Errorf(codes.DeadlineExceeded, "Request timeout: %v", err)
 		}
 		return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
 	}
@@ -137,10 +147,10 @@ func (handler *Handler) GoogleLogin(ctx context.Context, req *pb.GoogleLoginRequ
 		return nil, status.Errorf(codes.Internal, "error while retrieving user info: %v", err)
 	}
 
-	user, err := handler.Repo.GetUserByUserName(info.Email)
+	user, err := handler.Repo.GetUserByUserName(ctx, info.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			user, err = handler.Repo.CreateUser(convertUserInfo(info))
+			user, err = handler.Repo.CreateUser(ctx, convertUserInfo(info))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "error while creating user: %v", err)
 			}

@@ -7,15 +7,14 @@ import (
 )
 
 const (
-	serviceName = "auth"
-	resolver    = "consul"
+	resolver = "consul"
 )
 
 type AuthClient struct {
 	client pb.AuthServiceClient
 }
 
-func InitAuthClient() (*AuthClient, error) {
+func InitAuthClient(serviceName string) (*AuthClient, error) {
 
 	conn, err := discovery.ServiceConnection(context.Background(), serviceName, resolver)
 	if err != nil {

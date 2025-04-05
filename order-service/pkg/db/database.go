@@ -12,11 +12,11 @@ func DbConn(DbSource string) *gorm.DB {
 	db, err := gorm.Open(
 		postgres.Open(DbSource), &gorm.Config{TranslateError: true})
 	if err != nil {
-		log.Fatalf("database connection error: %v", err)
+		log.Fatalf("timeout connection error: %v", err)
 	}
 	err = db.AutoMigrate(model.Order{}, model.OrderDetail{})
 	if err != nil {
-		log.Fatalf("database migration error: %v", err)
+		log.Fatalf("timeout migration error: %v", err)
 	}
 	return db
 }

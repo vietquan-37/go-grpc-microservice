@@ -43,15 +43,15 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 	if product.Stock < req.Stock {
 		return nil, status.Errorf(codes.InvalidArgument, "Product stock is insufficient")
 	}
-	order, _ := h.Repo.GetPendingOrder(metadata.User.UserId)
+	order, _ := h.Repo.GetPendingOrder(ctx, metadata.User.UserId)
 	if order == nil {
-		order, err = h.Repo.CreateOrder(createPendingOrder(metadata.User.UserId))
+		order, err = h.Repo.CreateOrder(ctx, createPendingOrder(metadata.User.UserId))
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error while creating order: %v", err)
 		}
 	}
 	price := float64(product.Price * float32(req.GetStock()))
-	detail, _ := h.Repo.GetOrderDetailByProductId(product.GetId())
+	detail, _ := h.Repo.GetOrderDetailByProductId(ctx, product.GetId())
 	if detail != nil && detail.Quantity+req.GetStock() > product.Stock {
 		return nil, status.Errorf(codes.InvalidArgument, "Product stock is insufficient")
 	}
@@ -63,7 +63,7 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 				Quantity:  req.GetStock(),
 				Price:     price,
 			}
-			err = repo.CreateOrderDetail(models)
+			err = repo.CreateOrderDetail(ctx, models)
 			if err != nil {
 				return err
 			}
@@ -71,13 +71,13 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 			detail.Price += price
 			detail.Quantity += req.GetStock()
 
-			err = repo.UpdateOrderDetail(detail)
+			err = repo.UpdateOrderDetail(ctx, detail)
 			if err != nil {
 				return err
 			}
 		}
 		order.Amount += price
-		err = repo.UpdateOrder(order)
+		err = repo.UpdateOrder(ctx, order)
 		if err != nil {
 			return err
 		}
@@ -97,7 +97,7 @@ func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailReq
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to extract user mtdt: %v", err)
 	}
-	detail, err := h.Repo.GetOrderDetailById(req.GetId())
+	detail, err := h.Repo.GetOrderDetailById(ctx, req.GetId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Error(codes.NotFound, "order detail not found")
@@ -105,16 +105,16 @@ func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailReq
 		return nil, status.Errorf(codes.Internal, "error while fetching order detail: %v", err)
 	}
 	err = h.Repo.Transaction(func(repo repo.IOrderRepo) error {
-		err = repo.DeleteOrderDetail(detail)
+		err = repo.DeleteOrderDetail(ctx, detail)
 		if err != nil {
 			return err
 		}
-		order, err := h.Repo.GetPendingOrder(metadata.User.UserId)
+		order, err := h.Repo.GetPendingOrder(ctx, metadata.User.UserId)
 		if err != nil {
 			return err
 		}
 		order.Amount -= detail.Price
-		err = h.Repo.UpdateOrder(order)
+		err = h.Repo.UpdateOrder(ctx, order)
 		if err != nil {
 			return err
 		}
@@ -133,11 +133,7 @@ func (h *OrderHandler) GetUserCart(ctx context.Context, req *pb.UserCartRequest)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to extract user mtdt: %v", err)
 	}
-	//user, err := h.AuthClient.GetOneUser(ctx, metadata.User.UserId)
-	//if err != nil {
-	//	return nil, err
-	//}
-	order, err := h.Repo.GetPendingOrder(metadata.User.UserId)
+	order, err := h.Repo.GetPendingOrder(ctx, metadata.User.UserId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Error(codes.NotFound, "order not found")

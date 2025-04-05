@@ -33,6 +33,7 @@ message LoginRequest{
 message LoginResponse{
     string access_token=1;
     string refresh_token=2;
+    int32 user_id=3;
 }
 message GoogleLoginRequest{
     string code=1;

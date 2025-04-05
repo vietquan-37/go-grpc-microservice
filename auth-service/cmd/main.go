@@ -5,6 +5,7 @@ import (
 	"common/discovery/consul"
 	"common/loggers"
 	"common/mtdt"
+	"common/timeout"
 	"common/validate"
 	"context"
 	"github.com/rs/zerolog/log"
@@ -41,11 +42,10 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to connect to consul")
 	}
 	instanceId := discovery.GenerateInstanceID(c.ServiceName)
-	if err := registry.Register(instanceId, c.ServiceName, c.GrpcServerAddress); err != nil {
+	if err := registry.Register(instanceId, c.ServiceName, c.GrpcServerAddress, c.Resolve); err != nil {
 		log.Fatal().Err(err).Msg("failed to register service")
 	}
 	defer registry.Deregister(instanceId, c.ServiceName)
-
 	go func() {
 		for {
 			if err := registry.HealthCheck(instanceId); err != nil {
@@ -56,7 +56,7 @@ func main() {
 	}()
 
 	d := db.DbConn(c.DbSource)
-	repo := initAuthRepo(d)
+	repo := initAuthRepo(d, c.AdminUserName, c.AdminPassword)
 
 	jwtMaker, err := config.NewJwtWrapper(c.JwtSecret)
 	if err != nil {
@@ -70,12 +70,13 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create validator interceptor")
 	}
-
+	durations := time.Second * 6
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			loggers.GrpcLoggerInterceptor,
 			mtdt.ForwardMetadataUnaryServerInterceptor(),
 			validateInterceptor.ValidateInterceptor(),
+			timeout.UnaryTimeoutInterceptor(durations),
 		),
 	)
 	pb.RegisterAuthServiceServer(grpcServer, h)
@@ -96,11 +97,11 @@ func main() {
 	<-ctx.Done()
 	log.Info().Msg("Shutting down server...")
 	longTask.Wait()
+	log.Info().Msg("waiting for goroutines to finish")
 	grpcServer.GracefulStop()
-
 	log.Info().Msg("Server stopped gracefully")
 }
 
-func initAuthRepo(db *gorm.DB) repository.IAuthRepo {
-	return repository.NewAuthRepo(db)
+func initAuthRepo(db *gorm.DB, adminUsername, adminPassword string) repository.IAuthRepo {
+	return repository.NewAuthRepo(db, adminUsername, adminPassword)
 }

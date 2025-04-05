@@ -48,7 +48,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to connect to consul")
 	}
 	instanceId := discovery.GenerateInstanceID(c.ServiceName)
-	if err := registry.Register(instanceId, c.ServiceName, c.GatewayPort); err != nil {
+	if err := registry.Register(instanceId, c.ServiceName, c.GatewayPort, c.Resolve); err != nil {
 		log.Fatal().Err(err).Msg("failed to register service")
 	}
 	err = consul.RegisterConsulResolver(registry.Client)
@@ -106,8 +106,9 @@ func main() {
 		time.Second*5)
 
 	rlMiddleware := middleware.NewRateLimiterMiddleware(rateLimiter)
+	handler := middleware.CorsMiddleware(rlMiddleware.RateLimitMiddleware(mux))
 	httpServer := &http.Server{
-		Handler: rlMiddleware.RateLimitMiddleware(mux),
+		Handler: handler,
 		Addr:    c.GatewayPort,
 	}
 	waitGroup, ctx := errgroup.WithContext(ctx)

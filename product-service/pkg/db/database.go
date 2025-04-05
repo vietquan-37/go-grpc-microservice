@@ -16,7 +16,7 @@ func DbConn(DbSource string) *gorm.DB {
 		log.Fatal().Err(err).Msg("fail to migrate model:")
 	}
 	if err != nil {
-		log.Fatal().Err(err).Msg("fail to open database connection:")
+		log.Fatal().Err(err).Msg("fail to open timeout connection:")
 		return nil
 	}
 	return db

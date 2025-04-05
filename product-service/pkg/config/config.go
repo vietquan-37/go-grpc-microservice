@@ -5,10 +5,12 @@ import (
 )
 
 type Config struct {
-	DbSource    string `mapstructure:"DB_SOURCE"`
-	GrpcAddr    string `mapstructure:"GRPC_SERVER_ADDRESS"`
-	ServiceName string `mapstructure:"SERVICE_NAME"`
-	ConsulAddr  string `mapstructure:"CONSUL_ADDR"`
+	DbSource        string `mapstructure:"DB_SOURCE"`
+	GrpcAddr        string `mapstructure:"GRPC_SERVER_ADDRESS"`
+	ServiceName     string `mapstructure:"SERVICE_NAME"`
+	AuthServiceName string `mapstructure:"AUTH_SERVICE_NAME"`
+	ConsulAddr      string `mapstructure:"CONSUL_ADDR"`
+	Resolve         bool   `mapstructure:"RESOLVE"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

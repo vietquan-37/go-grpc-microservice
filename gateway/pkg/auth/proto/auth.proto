@@ -14,9 +14,10 @@ message CreateUserRequest{
 message UserResponse{
   int32 user_id=1;
   string user_name=2;
-  string phone_number=3;
-  string role=4;
-  google.protobuf.Timestamp create_at=5;
+  string full_name=3;
+  string phone_number=4;
+  string role=5;
+  google.protobuf.Timestamp create_at=6;
 }
 message GetOneUserRequest{
   int32 id=1;
@@ -25,6 +26,7 @@ message GetOneUserRequest{
 message GoogleLoginRequest{
   string code=1;
 }
+
 message LoginRequest{
   string user_name=1;
   string password=2;
@@ -32,6 +34,7 @@ message LoginRequest{
 message LoginResponse{
   string access_token=1;
   string refresh_token=2;
+  int32 user_id=3;
 }
 service AuthService{
   rpc Register(CreateUserRequest)returns(UserResponse){
@@ -55,6 +58,7 @@ service AuthService{
   rpc GetOneUser(GetOneUserRequest)returns(UserResponse){
     option (google.api.http) = {
       get: "/v1/user/{id}"
+
     };
   }
 

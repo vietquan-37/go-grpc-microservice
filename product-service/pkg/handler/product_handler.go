@@ -24,7 +24,7 @@ func NewProductHandler(repo repo.IProductRepo) *ProductHandler {
 func (h *ProductHandler) CreateProduct(ctx context.Context, req *pb.CreateProductRequest) (*pb.ProductResponse, error) {
 
 	model := convertToProduct(req)
-	product, err := h.Repo.CreateProduct(model)
+	product, err := h.Repo.CreateProduct(ctx, model)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error while creating product : %s", err.Error())
 	}
@@ -32,7 +32,7 @@ func (h *ProductHandler) CreateProduct(ctx context.Context, req *pb.CreateProduc
 	return rsp, nil
 }
 func (h *ProductHandler) UpdateProduct(ctx context.Context, req *pb.UpdateProductRequest) (*pb.ProductResponse, error) {
-	product, err := h.Repo.FindProduct(req.GetId())
+	product, err := h.Repo.FindProduct(ctx, req.GetId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "product not found")
@@ -41,7 +41,7 @@ func (h *ProductHandler) UpdateProduct(ctx context.Context, req *pb.UpdateProduc
 	}
 	product.Price = req.GetPrice()
 	product.Stock = req.GetStock()
-	product, err = h.Repo.UpdateProduct(product)
+	product, err = h.Repo.UpdateProduct(ctx, product)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error while updating product : %s", err.Error())
 	}
@@ -49,7 +49,7 @@ func (h *ProductHandler) UpdateProduct(ctx context.Context, req *pb.UpdateProduc
 	return rsp, nil
 }
 func (h *ProductHandler) DecreaseProductStock(ctx context.Context, req *pb.DecreaseStockRequest) (*pb.CommonResponse, error) {
-	product, err := h.Repo.FindProduct(req.GetProductId())
+	product, err := h.Repo.FindProduct(ctx, req.GetProductId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "product not found")
@@ -60,7 +60,7 @@ func (h *ProductHandler) DecreaseProductStock(ctx context.Context, req *pb.Decre
 		return nil, status.Errorf(codes.InvalidArgument, "product %s stock is insufficient", product.Name)
 	}
 	product.Stock -= req.Quantity
-	product, err = h.Repo.UpdateProduct(product)
+	product, err = h.Repo.UpdateProduct(ctx, product)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error while updating product : %s", err.Error())
 	}
@@ -70,7 +70,7 @@ func (h *ProductHandler) DecreaseProductStock(ctx context.Context, req *pb.Decre
 }
 func (h *ProductHandler) FindOneProduct(ctx context.Context, req *pb.ProductRequest) (*pb.ProductResponse, error) {
 
-	product, err := h.Repo.FindProduct(req.GetId())
+	product, err := h.Repo.FindProduct(ctx, req.GetId())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "product not found")
@@ -81,7 +81,7 @@ func (h *ProductHandler) FindOneProduct(ctx context.Context, req *pb.ProductRequ
 	return rsp, nil
 }
 func (h *ProductHandler) FindAllProduct(ctx context.Context, req *emptypb.Empty) (*pb.ProductResponseList, error) {
-	products, err := h.Repo.FindAllProducts()
+	products, err := h.Repo.FindAllProducts(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error while finding all products : %s", err.Error())
 	}

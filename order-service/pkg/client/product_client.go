@@ -8,15 +8,14 @@ import (
 )
 
 const (
-	serviceName = "product"
-	resolver    = "consul"
+	resolver = "consul"
 )
 
 type ProductClient struct {
 	client pb.ProductServiceClient
 }
 
-func InitProductClient() (*ProductClient, error) {
+func InitProductClient(serviceName string) (*ProductClient, error) {
 
 	conn, err := discovery.ServiceConnection(context.Background(), serviceName, resolver)
 	if err != nil {

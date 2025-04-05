@@ -363,6 +363,7 @@ type LoginResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	RefreshToken  string                 `protobuf:"bytes,2,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	UserId        int32                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -409,6 +410,13 @@ func (x *LoginResponse) GetRefreshToken() string {
 		return x.RefreshToken
 	}
 	return ""
+}
+
+func (x *LoginResponse) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
 }
 
 type GoogleLoginRequest struct {
@@ -481,10 +489,11 @@ const file_auth_proto_rawDesc = "" +
 	"\x04user\x18\x01 \x01(\v2\x10.pb.UserResponseR\x04user\"[\n" +
 	"\fLoginRequest\x12$\n" +
 	"\tuser_name\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\buserName\x12%\n" +
-	"\bpassword\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x03\x18\x10R\bpassword\"W\n" +
+	"\bpassword\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x03\x18\x10R\bpassword\"p\n" +
 	"\rLoginResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
-	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\"(\n" +
+	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\x05R\x06userId\"(\n" +
 	"\x12GoogleLoginRequest\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code2\xa2\x02\n" +
 	"\vAuthService\x125\n" +

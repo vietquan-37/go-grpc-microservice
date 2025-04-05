@@ -1,11 +1,14 @@
 package repo
 
-import "github.com/vietquan-37/product-service/pkg/model"
+import (
+	"context"
+	"github.com/vietquan-37/product-service/pkg/model"
+)
 
 type IProductRepo interface {
-	CreateProduct(*model.Product) (*model.Product, error)
-	FindProduct(int32) (*model.Product, error)
-	UpdateProduct(*model.Product) (*model.Product, error)
-	DeleteProduct(int32) error
-	FindAllProducts() ([]*model.Product, error)
+	CreateProduct(context.Context, *model.Product) (*model.Product, error)
+	FindProduct(context.Context, int32) (*model.Product, error)
+	UpdateProduct(context.Context, *model.Product) (*model.Product, error)
+	DeleteProduct(context.Context, int32) error
+	FindAllProducts(context.Context) ([]*model.Product, error)
 }
