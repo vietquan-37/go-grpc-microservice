@@ -58,7 +58,7 @@ func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest)
 	// opening new thread
 	go func() {
 		//for testing purpose
-		time.Sleep(time.Second * 5)
+		//time.Sleep(3*time.Second)
 		defer handler.wg.Done()
 		if err := handler.MailService.SendWelcomeEmail(user.Username, user.FullName); err != nil {
 			log.Error().Err(err).Msg("error while sending welcome email")

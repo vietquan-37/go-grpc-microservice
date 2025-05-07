@@ -1,0 +1,87 @@
+version: '3.9'
+services:
+  api-gateway:
+    image: vietquandeptrai/api-gateway
+    environment:
+      - CONSUL_ADDR=consul:8500
+      - GATEWAY_PORT=:6969
+      - AUTH_SERVICE_NAME=auth-svc
+      - PRODUCT_SERVICE_NAME=product-svc
+      - ORDER_SERVICE_NAME=order-svc
+      - SERVICE_NAME=api-gateway
+      - MODE=production
+    restart: unless-stopped
+    depends_on:
+      - auth-svc
+      - product-svc
+      - order-svc
+    networks:
+      - shared-network
+
+  product-svc:
+    image: vietquandeptrai/product-svc
+    environment:
+      - CONSUL_ADDR=consul:8500
+      - DB_SOURCE=postgresql://postgres:12345@product-db:5432/product_db?sslmode=disable
+      - GRPC_SERVER_ADDRESS=:5052
+      - SERVICE_NAME=product-svc
+      - AUTH_SERVICE_NAME=auth-svc
+      - MODE=production
+    restart: always
+    depends_on:
+      - auth-svc
+    networks:
+      - shared-network
+
+
+  order-svc:
+    image: vietquandeptrai/order-svc
+    ports:
+      - "5054:5054"
+    environment:
+      - CONSUL_ADDR=consul:8500
+      - DB_SOURCE=postgresql://postgres:12345@order-db:5432/order_db?sslmode=disable
+      - GRPC_SERVER_ADDRESS=:5054
+      - SERVICE_NAME=order-svc
+      - AUTH_SERVICE_NAME=auth
+      - PRODUCT_SERVICE_NAME=product-svc
+      - MODE=production
+    depends_on:
+      - auth-svc
+      - product-svc
+    restart: always
+    networks:
+      - shared-network
+
+  ui:
+    image: vietquandeptrai/ui
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_BACK_END=http://localhost/api
+    restart: always
+    networks:
+      - shared-network
+
+  auth-svc:
+    image: vietquandeptrai/auth-svc
+    ports:
+      - "5051:5051"
+    environment:
+      - CONSUL_ADDR=consul:8500
+      - DB_SOURCE=postgresql://postgres:12345@auth-db:5432/auth_db?sslmode=disable
+      - GRPC_SERVER_ADDRESS=:5051
+      - JWT_SECRET=dmlldHF1YW5kZXB0cmFp
+      - ADMIN_USERNAME=bubakush20099@gmail.com
+      - ADMIN_PASSWORD=123
+      - SERVICE_NAME=auth-svc
+      - MODE=production
+    restart: always
+    networks:
+      - shared-network
+
+
+networks:
+  shared-network:
+    external: true
+

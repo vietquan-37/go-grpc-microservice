@@ -47,7 +47,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to connect to consul")
 	}
 	instanceId := discovery.GenerateInstanceID(c.ServiceName)
-	if err := registry.Register(instanceId, c.ServiceName, c.GrpcAddr, c.Resolve); err != nil {
+	if err := registry.Register(instanceId, c.ServiceName, c.GrpcAddr, c.Mode); err != nil {
 		log.Fatal().Err(err).Msg("failed to register service")
 	}
 

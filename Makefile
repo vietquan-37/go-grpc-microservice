@@ -12,6 +12,7 @@ docker-build:
 	docker build -f ./auth-service/Dockerfile -t  vietquandeptrai/auth-svc .
 	docker build -f ./product-service/Dockerfile -t vietquandeptrai/product-svc .
 	docker build -f ./order-service/Dockerfile -t vietquandeptrai/order-svc .
+
 docker-push:
 	cd gateway && docker push vietquandeptrai/api-gateway
 	cd auth-service && docker push vietquandeptrai/auth-svc

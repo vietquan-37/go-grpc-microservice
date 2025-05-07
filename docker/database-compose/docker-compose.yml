@@ -1,0 +1,53 @@
+version: '3.9'
+services:
+  auth-db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=auth_db
+    ports:
+      - "5431:5432"
+    volumes:
+      - auth-data:/var/lib/postgresql/data
+    networks:
+      - shared-network
+      - database-network
+
+  product-db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=product_db
+    ports:
+      - "5430:5432"
+    volumes:
+      - product-data:/var/lib/postgresql/data
+    networks:
+      - shared-network
+      - database-network
+
+  order-db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=order_db
+    ports:
+      - "5429:5432"
+    volumes:
+      - order-data:/var/lib/postgresql/data
+    networks:
+     - shared-network
+     - database-network
+
+volumes:
+  auth-data:
+  product-data:
+  order-data:
+networks:
+  database-network:
+    internal: true
+  shared-network:
+    external: true
