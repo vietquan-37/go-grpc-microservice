@@ -11,12 +11,33 @@ services:
       - SERVICE_NAME=api-gateway
       - MODE=production
     restart: unless-stopped
+    ports:
+      - "6969:6969"
+    deploy:
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        monitor: 35s
+        failure_action: rollback
+      rollback_config:
+        delay: 10s
+        parallelism: 1
+        order: stop-first
+
     depends_on:
       - auth-svc
       - product-svc
       - order-svc
     networks:
       - shared-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:6969/health"]
+      interval: 10s
+      timeout: 2s
+      retries: 3
+      start_period: 5s
+
 
   product-svc:
     image: vietquandeptrai/product-svc
@@ -28,8 +49,27 @@ services:
       - AUTH_SERVICE_NAME=auth-svc
       - MODE=production
     restart: always
+    ports:
+      - "5052:5052"
+    healthcheck:
+      test: ["CMD-SHELL", "grpc_health_probe -addr=127.0.0.1:5052 -rpc-timeout=2s"]
+      interval: 10s
+      timeout: 2s
+      retries: 3
+      start_period: 5s
     depends_on:
       - auth-svc
+    deploy:
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        monitor: 35s
+        failure_action: rollback
+      rollback_config:
+        delay: 10s
+        parallelism: 1
+        order: stop-first
     networks:
       - shared-network
 
@@ -50,6 +90,23 @@ services:
       - auth-svc
       - product-svc
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "grpc_health_probe -addr=127.0.0.1:5054 -rpc-timeout=2s"]
+      interval: 10s
+      timeout: 2s
+      retries: 3
+      start_period: 5s
+    deploy:
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        monitor: 35s
+        failure_action: rollback
+      rollback_config:
+        delay: 10s
+        parallelism: 1
+        order: stop-first
     networks:
       - shared-network
 
@@ -58,7 +115,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      - VITE_BACK_END=http://localhost/api
+      - VITE_BACK_END=http://nginx:80/api
     restart: always
     networks:
       - shared-network
@@ -79,9 +136,24 @@ services:
     restart: always
     networks:
       - shared-network
-
+    deploy:
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        monitor: 35s
+        failure_action: rollback
+      rollback_config:
+        delay: 10s
+        parallelism: 1
+        order: stop-first
+    healthcheck:
+     test: ["CMD-SHELL", "grpc_health_probe -addr=127.0.0.1:5051 -rpc-timeout=2s"]
+     interval: 10s
+     timeout: 2s
+     retries: 3
+     start_period: 5s
 
 networks:
   shared-network:
     external: true
-

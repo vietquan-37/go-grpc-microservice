@@ -18,6 +18,8 @@ import (
 	"github.com/vietquan-37/order-service/pkg/handler"
 	"github.com/vietquan-37/order-service/pkg/pb"
 	"github.com/vietquan-37/order-service/pkg/repo"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"os"
 	"os/signal"
 	"syscall"
@@ -93,6 +95,9 @@ func main() {
 		),
 	)
 	pb.RegisterOrderServiceServer(grpcServer, h)
+	healthSrv := health.NewServer()
+	healthpb.RegisterHealthServer(grpcServer, healthSrv)
+	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 	reflection.Register(grpcServer)
 	lis, err := net.Listen("tcp", c.GrpcServerAddress)
 	if err != nil {
@@ -108,6 +113,7 @@ func main() {
 	}()
 	<-ctx.Done()
 	log.Info().Msgf("stop  gRPC server server at %s", lis.Addr().String())
+	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
 	grpcServer.GracefulStop()
 	log.Info().Msg("stopped gRPC server server")
 }

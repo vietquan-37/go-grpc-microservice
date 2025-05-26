@@ -106,11 +106,13 @@ func main() {
 		time.Second*5)
 
 	rlMiddleware := middleware.NewRateLimiterMiddleware(rateLimiter)
-	handler := middleware.CorsMiddleware(rlMiddleware.RateLimitMiddleware(mux))
+	corsMiddleware := middleware.CorsMiddleware(rlMiddleware.RateLimitMiddleware(mux))
+	handler := middleware.HealthCheckHandler(corsMiddleware)
 	httpServer := &http.Server{
 		Handler: handler,
 		Addr:    c.GatewayPort,
 	}
+
 	waitGroup, ctx := errgroup.WithContext(ctx)
 	waitGroup.Go(func() error {
 		if err := httpServer.ListenAndServe(); err != nil {

@@ -1,4 +1,4 @@
-# Build stage
+
 FROM golang:1.23.1-alpine AS builder
 WORKDIR /app
 COPY ./common ./common
@@ -11,7 +11,8 @@ RUN go build -o /bin/server ./cmd
 
 FROM alpine:latest AS server
 WORKDIR /app
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates curl
+
 COPY --from=builder /bin/server ./server
 COPY ./gateway/app.env ./
 CMD ["./server"]

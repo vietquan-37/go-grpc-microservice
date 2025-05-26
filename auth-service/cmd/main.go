@@ -16,6 +16,8 @@ import (
 	"github.com/vietquan-37/auth-service/pkg/pb"
 	"github.com/vietquan-37/auth-service/pkg/repository"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 	"gorm.io/gorm"
 	"net"
@@ -80,6 +82,9 @@ func main() {
 		),
 	)
 	pb.RegisterAuthServiceServer(grpcServer, h)
+	healthSrv := health.NewServer()
+	healthpb.RegisterHealthServer(grpcServer, healthSrv)
+	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 	reflection.Register(grpcServer)
 
 	lis, err := net.Listen("tcp", c.GrpcServerAddress)
@@ -93,9 +98,10 @@ func main() {
 			log.Fatal().Err(err).Msg("gRPC server failed")
 		}
 	}()
-
+	log.Info().Msg("gRPC server started")
 	<-ctx.Done()
 	log.Info().Msg("Shutting down server...")
+	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
 	longTask.Wait()
 	log.Info().Msg("waiting for goroutines to finish")
 	grpcServer.GracefulStop()

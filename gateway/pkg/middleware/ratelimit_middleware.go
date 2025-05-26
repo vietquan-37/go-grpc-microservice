@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/gateway/pkg/ratelimiter"
 	"net/http"
 )
@@ -21,6 +22,7 @@ func NewRateLimiterMiddleware(limiter ratelimiter.Limiter) *RateLimiterMiddlewar
 }
 func (m *RateLimiterMiddleware) RateLimitMiddleware(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Info().Msg("Req in")
 		if allow, retryAfter := m.limiter.Allow(r.RemoteAddr); !allow {
 			http.Error(w, fmt.Sprintf(msg, retryAfter.String()), http.StatusTooManyRequests)
 			return

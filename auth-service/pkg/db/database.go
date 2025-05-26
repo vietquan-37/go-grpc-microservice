@@ -2,7 +2,6 @@ package db
 
 import (
 	"github.com/rs/zerolog/log"
-
 	"github.com/vietquan-37/auth-service/pkg/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

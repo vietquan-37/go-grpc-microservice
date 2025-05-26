@@ -12,6 +12,8 @@ import (
 	"common/validate"
 	"context"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"os"
 	"os/signal"
 	"syscall"
@@ -88,6 +90,9 @@ func main() {
 		),
 	)
 	pb.RegisterProductServiceServer(grpcServer, h)
+	healthSrv := health.NewServer()
+	healthpb.RegisterHealthServer(grpcServer, healthSrv)
+	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 	reflection.Register(grpcServer)
 	lis, err := net.Listen("tcp", c.GrpcAddr)
 	if err != nil {
@@ -101,6 +106,7 @@ func main() {
 	}()
 	<-ctx.Done()
 	log.Info().Msg("Shutting down server...")
+	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
 	grpcServer.GracefulStop()
 	log.Info().Msg("Server stopped gracefully")
 }
