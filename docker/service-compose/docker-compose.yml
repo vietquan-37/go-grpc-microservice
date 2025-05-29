@@ -34,7 +34,7 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:6969/health"]
       interval: 10s
-      timeout: 2s
+      timeout: 3s
       retries: 3
       start_period: 5s
 
@@ -114,8 +114,6 @@ services:
     image: vietquandeptrai/ui
     ports:
       - "3000:80"
-    environment:
-      - VITE_BACK_END=http://nginx:80/api
     restart: always
     networks:
       - shared-network
