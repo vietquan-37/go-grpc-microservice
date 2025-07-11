@@ -1,11 +1,12 @@
 package handler
 
 import (
+	"common/kafka/producer"
 	"context"
 	"errors"
 	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/auth-service/pkg/config"
-	"github.com/vietquan-37/auth-service/pkg/email"
+	"github.com/vietquan-37/auth-service/pkg/message"
 	"github.com/vietquan-37/auth-service/pkg/oauth2"
 	"sync"
 
@@ -19,20 +20,20 @@ import (
 
 type Handler struct {
 	pb.UnimplementedAuthServiceServer
-	wg          *sync.WaitGroup
-	Jwt         config.JwtWrapper
-	Repo        repository.IAuthRepo
-	Config      config.Config
-	MailService *email.MailService
+	wg       *sync.WaitGroup
+	Jwt      config.JwtWrapper
+	Repo     repository.IAuthRepo
+	Config   config.Config
+	Producer *producer.Producer
 }
 
-func NewAuthHandler(jwt config.JwtWrapper, repo repository.IAuthRepo, config config.Config, mailService *email.MailService, wait *sync.WaitGroup) *Handler {
+func NewAuthHandler(jwt config.JwtWrapper, repo repository.IAuthRepo, config config.Config, wait *sync.WaitGroup, producer *producer.Producer) *Handler {
 	return &Handler{
-		Jwt:         jwt,
-		Repo:        repo,
-		Config:      config,
-		wg:          wait,
-		MailService: mailService,
+		Jwt:      jwt,
+		Repo:     repo,
+		Config:   config,
+		wg:       wait,
+		Producer: producer,
 	}
 }
 func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest) (*pb.UserResponse, error) {
@@ -54,14 +55,29 @@ func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest)
 		}
 		return nil, status.Errorf(codes.Internal, "error while creating user: %s", err)
 	}
+
+	token, err := handler.Jwt.GenerateJWT(user, time.Hour)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while generating token: %v", err)
+	}
+	payload, err := message.NewUserCreatedEnvelope("auth-service", "1", message.UserCreateMessage{
+		ID:       int32(user.ID),
+		Email:    user.Username,
+		FullName: user.FullName,
+		Token:    token})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while creating user message: %s", err)
+	}
 	handler.wg.Add(1)
-	// opening new thread
 	go func() {
-		//for testing purpose
-		//time.Sleep(3*time.Second)
 		defer handler.wg.Done()
-		if err := handler.MailService.SendWelcomeEmail(user.Username, user.FullName); err != nil {
-			log.Error().Err(err).Msg("error while sending welcome email")
+		if err := handler.Producer.SendMessage(context.Background(), handler.Config.Topic, nil, payload); err != nil {
+			log.Error().
+				Err(err).
+				Uint("user_id", user.ID).
+				Str("email", user.Username).
+				Str("topic", handler.Config.Topic).
+				Msg("CRITICAL: Failed to send user created message to Kafka")
 		}
 	}()
 

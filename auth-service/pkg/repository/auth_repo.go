@@ -42,7 +42,6 @@ func NewAuthRepo(db *gorm.DB, adminUsername, adminPassword string) IAuthRepo {
 }
 
 func (repo *AuthRepo) GetUserByUserName(ctx context.Context, username string) (*model.User, error) {
-	//time.Sleep(10 * time.Second)
 	var dbUser model.User
 	err := repo.DB.WithContext(ctx).Where("username = ?", username).First(&dbUser).Error
 	if err != nil {

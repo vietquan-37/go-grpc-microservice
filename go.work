@@ -6,4 +6,5 @@ use (
 ./auth-service
 ./common
 ./order-service
+./email-service
 )

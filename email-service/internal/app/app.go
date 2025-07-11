@@ -1,0 +1,37 @@
+package app
+
+import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+var interruptSignal = []os.Signal{os.Interrupt, syscall.SIGTERM, syscall.SIGINT}
+
+type App struct {
+	server *Server
+}
+
+func NewApp() *App {
+	return &App{}
+}
+
+func (a *App) Run() error {
+	ctx, stop := signal.NotifyContext(context.Background(), interruptSignal...)
+	defer stop()
+
+	a.server = newServer()
+
+	if err := a.server.initialize(); err != nil {
+		return err
+	}
+
+	if err := a.server.start(); err != nil {
+		return err
+	}
+
+	<-ctx.Done()
+	a.server.gracefulShutdown()
+	return nil
+}

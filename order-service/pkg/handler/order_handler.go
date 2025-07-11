@@ -8,7 +8,7 @@ import (
 	"github.com/vietquan-37/order-service/pkg/client"
 	"github.com/vietquan-37/order-service/pkg/model"
 	"github.com/vietquan-37/order-service/pkg/pb"
-	"github.com/vietquan-37/order-service/pkg/repo"
+	"github.com/vietquan-37/order-service/pkg/repository"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -18,10 +18,10 @@ type OrderHandler struct {
 	pb.UnimplementedOrderServiceServer
 	ProductClient *client.ProductClient
 	AuthClient    *commonclient.AuthClient
-	Repo          repo.IOrderRepo
+	Repo          repository.IOrderRepo
 }
 
-func NewOrderHandler(productClient *client.ProductClient, authClient *commonclient.AuthClient, repo repo.IOrderRepo) *OrderHandler {
+func NewOrderHandler(productClient *client.ProductClient, authClient *commonclient.AuthClient, repo repository.IOrderRepo) *OrderHandler {
 	return &OrderHandler{
 		ProductClient: productClient,
 		AuthClient:    authClient,
@@ -55,7 +55,7 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 	if detail != nil && detail.Quantity+req.GetStock() > product.Stock {
 		return nil, status.Errorf(codes.InvalidArgument, "Product stock is insufficient")
 	}
-	err = h.Repo.Transaction(func(repo repo.IOrderRepo) error {
+	err = h.Repo.Transaction(func(repo repository.IOrderRepo) error {
 		if detail == nil {
 			models := &model.OrderDetail{
 				OrderId:   int32(order.ID),
@@ -104,7 +104,7 @@ func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailReq
 		}
 		return nil, status.Errorf(codes.Internal, "error while fetching order detail: %v", err)
 	}
-	err = h.Repo.Transaction(func(repo repo.IOrderRepo) error {
+	err = h.Repo.Transaction(func(repo repository.IOrderRepo) error {
 		err = repo.DeleteOrderDetail(ctx, detail)
 		if err != nil {
 			return err

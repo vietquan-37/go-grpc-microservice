@@ -107,7 +107,7 @@ func NewRegistry(addr string) (*Registry, error) {
 	return &Registry{client}, nil
 
 }
-func (r *Registry) Register(instanceID, serviceName, hostPort, mode string) error {
+func (r *Registry) Register(instanceID, serviceName, hostPort string) error {
 	host, port, err := ExtractHostPortFromIP(hostPort)
 	if err != nil {
 		return err

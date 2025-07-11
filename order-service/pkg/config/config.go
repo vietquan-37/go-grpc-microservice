@@ -11,7 +11,6 @@ type Config struct {
 	ProductServiceName string `mapstructure:"PRODUCT_SERVICE_NAME"`
 	AuthServiceName    string `mapstructure:"AUTH_SERVICE_NAME"`
 	ConsulAddr         string `mapstructure:"CONSUL_ADDR"`
-	Mode               string `mapstructure:"MODE"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

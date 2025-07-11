@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/vietquan-37/product-service/pkg/pb"
-	"github.com/vietquan-37/product-service/pkg/repo"
+	"github.com/vietquan-37/product-service/pkg/repository"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -13,10 +13,10 @@ import (
 
 type ProductHandler struct {
 	pb.UnimplementedProductServiceServer
-	Repo repo.IProductRepo
+	Repo repository.IProductRepo
 }
 
-func NewProductHandler(repo repo.IProductRepo) *ProductHandler {
+func NewProductHandler(repo repository.IProductRepo) *ProductHandler {
 	return &ProductHandler{
 		Repo: repo,
 	}
