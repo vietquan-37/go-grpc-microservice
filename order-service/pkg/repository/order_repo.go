@@ -62,7 +62,6 @@ func (r *OrderRepo) GetOrderDetailByProductId(ctx context.Context, productId int
 	return &orderDetail, nil
 }
 func (r *OrderRepo) DeleteOrderDetail(ctx context.Context, model *model.OrderDetail) (err error) {
-
 	err = r.DB.WithContext(ctx).Unscoped().Delete(&model).Error
 	if err != nil {
 		return err

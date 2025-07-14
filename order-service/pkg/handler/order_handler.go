@@ -17,13 +17,15 @@ import (
 type OrderHandler struct {
 	pb.UnimplementedOrderServiceServer
 	ProductClient *client.ProductClient
+	PaymentClient *client.PaymentClient
 	AuthClient    *commonclient.AuthClient
 	Repo          repository.IOrderRepo
 }
 
-func NewOrderHandler(productClient *client.ProductClient, authClient *commonclient.AuthClient, repo repository.IOrderRepo) *OrderHandler {
+func NewOrderHandler(productClient *client.ProductClient, paymentClient *client.PaymentClient, authClient *commonclient.AuthClient, repo repository.IOrderRepo) *OrderHandler {
 	return &OrderHandler{
 		ProductClient: productClient,
+		PaymentClient: paymentClient,
 		AuthClient:    authClient,
 		Repo:          repo,
 	}
@@ -58,17 +60,16 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 	err = h.Repo.Transaction(func(repo repository.IOrderRepo) error {
 		if detail == nil {
 			models := &model.OrderDetail{
-				OrderId:   int32(order.ID),
+				OrderId:   order.ID,
 				ProductId: req.ProductId,
 				Quantity:  req.GetStock(),
-				Price:     price,
+				Price:     float64(product.Price),
 			}
 			err = repo.CreateOrderDetail(ctx, models)
 			if err != nil {
 				return err
 			}
 		} else {
-			detail.Price += price
 			detail.Quantity += req.GetStock()
 
 			err = repo.UpdateOrderDetail(ctx, detail)
@@ -109,12 +110,12 @@ func (h *OrderHandler) DeleteDetail(ctx context.Context, req *pb.DeleteDetailReq
 		if err != nil {
 			return err
 		}
-		order, err := h.Repo.GetPendingOrder(ctx, metadata.User.UserId)
+		order, err := repo.GetPendingOrder(ctx, metadata.User.UserId)
 		if err != nil {
 			return err
 		}
-		order.Amount -= detail.Price
-		err = h.Repo.UpdateOrder(ctx, order)
+		order.Amount -= detail.Price * float64(detail.Quantity)
+		err = repo.UpdateOrder(ctx, order)
 		if err != nil {
 			return err
 		}
@@ -133,6 +134,7 @@ func (h *OrderHandler) GetUserCart(ctx context.Context, req *pb.UserCartRequest)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to extract user mtdt: %v", err)
 	}
+
 	order, err := h.Repo.GetPendingOrder(ctx, metadata.User.UserId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -140,5 +142,64 @@ func (h *OrderHandler) GetUserCart(ctx context.Context, req *pb.UserCartRequest)
 		}
 		return nil, status.Errorf(codes.Internal, "error while fetching order: %v", err)
 	}
-	return convertToCart(order), nil
+
+	ids := make([]int32, 0, len(order.OrderDetail))
+	for _, detail := range order.OrderDetail {
+		ids = append(ids, detail.ProductId)
+	}
+
+	products, err := h.ProductClient.FindProducts(ctx, ids)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while fetching products: %v", err)
+	}
+
+	productMap := make(map[int32]string)
+	for _, p := range products.Products {
+		productMap[p.Id] = p.Name
+	}
+
+	return convertToCart(order, productMap), nil
+}
+
+func (h *OrderHandler) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
+	metadata, err := extract.UsersMetadata(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to extract user mtdt: %v", err)
+	}
+	order, err := h.Repo.GetPendingOrder(ctx, metadata.User.UserId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "order pending not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error while fetching order pending: %v", err)
+	}
+	if int32(order.ID) != req.GetOrderId() {
+		return nil, status.Errorf(codes.NotFound, "order id is invalid")
+	}
+	ids := make([]int32, 0, len(order.OrderDetail))
+	for _, id := range order.OrderDetail {
+		ids = append(ids, id.Id)
+	}
+	products, err := h.ProductClient.FindProducts(ctx, ids)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while fetching products: %v", err)
+	}
+	productMap := make(map[int32]string)
+	for _, p := range products.Products {
+		productMap[p.Id] = p.Name
+	}
+	res, err := h.PaymentClient.CreatePaymentLink(ctx,
+		&pb.PaymentLinkRequest{
+			OrderId: req.OrderId,
+			Amount:  float32(order.Amount),
+			Items:   covertToItems(order, productMap),
+		},
+	)
+	if res == nil {
+		return nil, status.Errorf(codes.Internal, "error while creating payment link: %v", err)
+	}
+	return &pb.PlaceOrderResponse{
+		PaymentLink: res.Link,
+	}, nil
+
 }

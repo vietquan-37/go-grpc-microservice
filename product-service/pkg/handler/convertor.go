@@ -24,3 +24,11 @@ func convertToProductResponse(model *model.Product) *pb.ProductResponse {
 	}
 
 }
+func convertToProductListResponse(models []*model.Product) []*pb.ProductResponse {
+	var productList []*pb.ProductResponse
+	for _, m := range models {
+		product := convertToProductResponse(m)
+		productList = append(productList, product)
+	}
+	return productList
+}

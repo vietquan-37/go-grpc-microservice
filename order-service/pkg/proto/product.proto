@@ -14,10 +14,16 @@ message ProductResponse{
 message ProductRequest{
   int32 id = 1;
 }
+message GetProductsRequest{
+  repeated int32 id=1;
+}
+message ProductResponseList{
+  repeated ProductResponse products = 1;
+}
 service ProductService{
 
   rpc findOneProduct(ProductRequest)returns(ProductResponse){}
-
+  rpc GetProducts(GetProductsRequest)returns(ProductResponseList){}
 }
 
 

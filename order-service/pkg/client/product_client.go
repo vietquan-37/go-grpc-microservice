@@ -33,3 +33,8 @@ func (c *ProductClient) FindOneProduct(ctx context.Context, productId int32) (*p
 		Id: productId,
 	})
 }
+func (c *ProductClient) FindProducts(ctx context.Context, ids []int32) (*pb.ProductResponseList, error) {
+	return c.client.GetProducts(ctx, &pb.GetProductsRequest{
+		Id: ids,
+	})
+}

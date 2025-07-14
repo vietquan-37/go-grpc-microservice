@@ -11,4 +11,5 @@ type IProductRepo interface {
 	UpdateProduct(context.Context, *model.Product) (*model.Product, error)
 	DeleteProduct(context.Context, int32) error
 	FindAllProducts(context.Context) ([]*model.Product, error)
+	FindProductsByIds(context.Context, []int32) ([]*model.Product, error)
 }

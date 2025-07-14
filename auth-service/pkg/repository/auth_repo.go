@@ -27,11 +27,11 @@ func NewAuthRepo(db *gorm.DB, adminUsername, adminPassword string) IAuthRepo {
 			log.Fatal().Err(err).Msg("fail to hash password:")
 		}
 		m := &model.User{
-
 			Username:    adminUsername,
 			Password:    hashPassword,
 			PhoneNumber: "0912021638",
 			Role:        enum.AdminRole,
+			Active:      true,
 		}
 		_, err = repo.CreateUser(ctx, m)
 		if err != nil {

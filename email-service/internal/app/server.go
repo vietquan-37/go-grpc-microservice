@@ -24,9 +24,8 @@ type Server struct {
 func newServer() *Server {
 	cfg, err := config.LoadConfig("../")
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to load configuration")
+		log.Fatal().Err(err).Msg("failed to load config")
 	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Server{
@@ -64,8 +63,7 @@ func (s *Server) setupConsumer() error {
 		s.config.BrokerAddr,
 		s.config.Topic,
 		s.config.GroupID,
-		s.config.MaxRetries,
-		s.messageHandler.MessageHandler,
+		s.messageHandler.ProcessMessage,
 	)
 
 	return nil

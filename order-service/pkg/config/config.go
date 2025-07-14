@@ -11,6 +11,7 @@ type Config struct {
 	ProductServiceName string `mapstructure:"PRODUCT_SERVICE_NAME"`
 	AuthServiceName    string `mapstructure:"AUTH_SERVICE_NAME"`
 	ConsulAddr         string `mapstructure:"CONSUL_ADDR"`
+	PaymentServiceName string `mapstructure:"PAYMENT_SERVICE_NAME"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

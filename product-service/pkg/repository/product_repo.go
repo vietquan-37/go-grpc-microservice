@@ -38,15 +38,24 @@ func (repo *ProductRepo) UpdateProduct(ctx context.Context, model *model.Product
 	return model, nil
 }
 func (repo *ProductRepo) DeleteProduct(ctx context.Context, Id int32) error {
-	err := repo.DB.WithContext(ctx).Where("id=?", Id).Delete(&model.Product{}).Error
+	err := repo.DB.WithContext(ctx).Where("id = ?", Id).Delete(&model.Product{}).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
+
 func (repo *ProductRepo) FindAllProducts(ctx context.Context) ([]*model.Product, error) {
 	var products []*model.Product
 	err := repo.DB.WithContext(ctx).Find(&products).Error
+	if err != nil {
+		return nil, err
+	}
+	return products, nil
+}
+func (repo *ProductRepo) FindProductsByIds(ctx context.Context, ids []int32) ([]*model.Product, error) {
+	var products []*model.Product
+	err := repo.DB.WithContext(ctx).Where("id in (?)", ids).Find(&products).Error
 	if err != nil {
 		return nil, err
 	}

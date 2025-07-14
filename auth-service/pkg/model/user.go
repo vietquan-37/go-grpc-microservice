@@ -12,4 +12,5 @@ type User struct {
 	Password    string
 	PhoneNumber string
 	Role        enum.Role
+	Active      bool `gorm:"default:false"`
 }

@@ -12,5 +12,5 @@ type Order struct {
 	OrderDate   time.Time
 	Status      enum.Status
 	UserId      uint
-	OrderDetail []OrderDetail `gorm:"foreignKey:OrderId"`
+	OrderDetail []OrderDetail `gorm:"foreignKey:OrderId;constraint:OnDelete:CASCADE;"`
 }

@@ -28,7 +28,7 @@ import (
 )
 
 type ServiceDependencies struct {
-	ProductHandler *handler.ProductHandler
+	ProductHandler pb.ProductServiceServer
 }
 
 func (s *Server) setupDependencies() (*ServiceDependencies, error) {
@@ -52,7 +52,7 @@ type Server struct {
 func newService() *Server {
 	c, err := config.LoadConfig("../")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to load config")
+		log.Fatal().Err(err).Msg("failed to load config")
 	}
 
 	return &Server{

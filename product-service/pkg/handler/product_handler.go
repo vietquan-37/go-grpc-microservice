@@ -85,15 +85,36 @@ func (h *ProductHandler) FindAllProduct(ctx context.Context, req *emptypb.Empty)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error while finding all products : %s", err.Error())
 	}
-	var productList []*pb.ProductResponse
-	for _, product := range products {
-		product := convertToProductResponse(product)
-		productList = append(productList, product)
-	}
+
 	return &pb.ProductResponseList{
-		Products: productList,
+		Products: convertToProductListResponse(products),
 	}, nil
 }
-func (h *ProductHandler) DeleteProduct(context.Context, *pb.ProductRequest) (*pb.CommonResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteProduct not implemented")
+func (h *ProductHandler) DeleteProduct(ctx context.Context, req *pb.ProductRequest) (*pb.CommonResponse, error) {
+	product, err := h.Repo.FindProduct(ctx, req.GetId())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "product not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error while finding product : %s", err.Error())
+	}
+	err = h.Repo.DeleteProduct(ctx, int32(product.ID))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while deleting product : %s", err.Error())
+	}
+	return &pb.CommonResponse{
+		Message: "Product deleted successfully",
+	}, nil
+}
+func (h *ProductHandler) GetProducts(ctx context.Context, req *pb.GetProductsRequest) (*pb.ProductResponseList, error) {
+	products, err := h.Repo.FindProductsByIds(ctx, req.GetId())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "products not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error while finding products : %s", err.Error())
+	}
+	return &pb.ProductResponseList{
+		Products: convertToProductListResponse(products),
+	}, nil
 }

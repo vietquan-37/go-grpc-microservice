@@ -38,7 +38,7 @@ type Server struct {
 func newServer() *Server {
 	c, err := config.LoadConfig("../")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to load config")
+		log.Fatal().Err(err).Msg("failed to load config")
 	}
 
 	return &Server{

@@ -8,12 +8,11 @@ import (
 
 type MessageHandler func(ctx context.Context, key, value []byte) error
 type Consumer struct {
-	reader     *kafka.Reader
-	maxRetries int
-	handler    MessageHandler
+	reader  *kafka.Reader
+	handler MessageHandler
 }
 
-func NewConsumer(brokers []string, topic string, groupId string, maxRetries int, handler MessageHandler) *Consumer {
+func NewConsumer(brokers []string, topic string, groupId string, handler MessageHandler) *Consumer {
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     brokers,
 		Topic:       topic,
@@ -23,12 +22,11 @@ func NewConsumer(brokers []string, topic string, groupId string, maxRetries int,
 		StartOffset: kafka.LastOffset,
 	})
 	return &Consumer{
-		reader:     reader,
-		maxRetries: maxRetries,
-		handler:    handler,
+		reader:  reader,
+		handler: handler,
 	}
 }
-func (c *Consumer) Start(ctx context.Context) error {
+func (c *Consumer) StartCommitFirst(ctx context.Context) error {
 	log.Info().
 		Str("topic", c.reader.Config().Topic).
 		Str("group_id", c.reader.Config().Topic).
@@ -58,4 +56,38 @@ func (c *Consumer) Start(ctx context.Context) error {
 }
 func (c *Consumer) Close() error {
 	return c.reader.Close()
+}
+
+func (c *Consumer) Start(ctx context.Context) error {
+	log.Info().
+		Str("topic", c.reader.Config().Topic).
+		Str("group_id", c.reader.Config().Topic).
+		Msg("Starting consumer")
+	for {
+		select {
+		case <-ctx.Done():
+			return c.reader.Close()
+		default:
+			m, err := c.reader.FetchMessage(ctx)
+			if err != nil {
+				log.Error().Err(err).Msg("Error reading message")
+				continue
+			}
+			log.Debug().
+				Str("topic", m.Topic).
+				Int("partition", m.Partition).
+				Int64("offset", m.Offset).
+				Str("key", string(m.Key)).
+				Msg("received message")
+			if err := c.handler(ctx, m.Key, m.Value); err != nil {
+				log.Error().Err(err).Msg("Error handling message")
+				continue
+			}
+			if err := c.reader.CommitMessages(ctx, m); err != nil {
+				log.Error().Err(err).Msg("Error committing message")
+
+			}
+
+		}
+	}
 }

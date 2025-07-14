@@ -16,7 +16,7 @@ func NewMessageHandler(emailService email.IEmailService) *MessageHandler {
 		emailService: emailService,
 	}
 }
-func (h *MessageHandler) MessageHandler(ctx context.Context, key, value []byte) error {
+func (h *MessageHandler) ProcessMessage(ctx context.Context, key, value []byte) error {
 	log.Debug().Msg("Processing message")
 	event, err := message.ParseUserCreatedMessage(value)
 	if err != nil {

@@ -27,32 +27,37 @@ import (
 )
 
 type ServiceDependencies struct {
-	OrderHandler *handler.OrderHandler
+	OrderHandler pb.OrderServiceServer
 }
 
 func (s *Server) setupDependencies() (*ServiceDependencies, error) {
 	repo := repository.NewOrderRepo(s.db)
 
-	productClient, authClient, err := s.setupExternalService()
+	productClient, paymentClient, authClient, err := s.setupExternalService()
 	if err != nil {
 		return nil, err
 	}
-	h := handler.NewOrderHandler(productClient, authClient, repo)
+	h := handler.NewOrderHandler(productClient, paymentClient, authClient, repo)
 	return &ServiceDependencies{
 		h,
 	}, nil
 }
-func (s *Server) setupExternalService() (*client.ProductClient, *commonclient.AuthClient, error) {
+func (s *Server) setupExternalService() (*client.ProductClient, *client.PaymentClient, *commonclient.AuthClient, error) {
 	productClient, err := client.InitProductClient(s.config.ProductServiceName)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
+	}
+	paymentClient, err := client.InitPaymentClient(s.config.PaymentServiceName)
+	if err != nil {
+		return nil, nil, nil, err
 	}
 	authClient, err := commonclient.InitAuthClient(s.config.AuthServiceName)
 	s.authClient = authClient
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	return productClient, authClient, nil
+
+	return productClient, paymentClient, authClient, nil
 }
 
 type Server struct {
@@ -68,7 +73,7 @@ type Server struct {
 func newService() *Server {
 	c, err := config.LoadConfig("../")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to load config")
+		log.Fatal().Err(err).Msg("failed to load config")
 	}
 
 	return &Server{

@@ -22,6 +22,7 @@ const (
 	OrderService_AddProduct_FullMethodName   = "/orderpb.OrderService/AddProduct"
 	OrderService_DeleteDetail_FullMethodName = "/orderpb.OrderService/DeleteDetail"
 	OrderService_GetUserCart_FullMethodName  = "/orderpb.OrderService/GetUserCart"
+	OrderService_PlaceOrder_FullMethodName   = "/orderpb.OrderService/PlaceOrder"
 )
 
 // OrderServiceClient is the client API for OrderService service.
@@ -31,6 +32,7 @@ type OrderServiceClient interface {
 	AddProduct(ctx context.Context, in *AddProductRequest, opts ...grpc.CallOption) (*CommonResponse, error)
 	DeleteDetail(ctx context.Context, in *DeleteDetailRequest, opts ...grpc.CallOption) (*CommonResponse, error)
 	GetUserCart(ctx context.Context, in *UserCartRequest, opts ...grpc.CallOption) (*UserCartResponse, error)
+	PlaceOrder(ctx context.Context, in *PlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrderResponse, error)
 }
 
 type orderServiceClient struct {
@@ -71,6 +73,16 @@ func (c *orderServiceClient) GetUserCart(ctx context.Context, in *UserCartReques
 	return out, nil
 }
 
+func (c *orderServiceClient) PlaceOrder(ctx context.Context, in *PlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PlaceOrderResponse)
+	err := c.cc.Invoke(ctx, OrderService_PlaceOrder_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderServiceServer is the server API for OrderService service.
 // All implementations should embed UnimplementedOrderServiceServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type OrderServiceServer interface {
 	AddProduct(context.Context, *AddProductRequest) (*CommonResponse, error)
 	DeleteDetail(context.Context, *DeleteDetailRequest) (*CommonResponse, error)
 	GetUserCart(context.Context, *UserCartRequest) (*UserCartResponse, error)
+	PlaceOrder(context.Context, *PlaceOrderRequest) (*PlaceOrderResponse, error)
 }
 
 // UnimplementedOrderServiceServer should be embedded to have
@@ -95,6 +108,9 @@ func (UnimplementedOrderServiceServer) DeleteDetail(context.Context, *DeleteDeta
 }
 func (UnimplementedOrderServiceServer) GetUserCart(context.Context, *UserCartRequest) (*UserCartResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserCart not implemented")
+}
+func (UnimplementedOrderServiceServer) PlaceOrder(context.Context, *PlaceOrderRequest) (*PlaceOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PlaceOrder not implemented")
 }
 func (UnimplementedOrderServiceServer) testEmbeddedByValue() {}
 
@@ -170,6 +186,24 @@ func _OrderService_GetUserCart_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderService_PlaceOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PlaceOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).PlaceOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_PlaceOrder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).PlaceOrder(ctx, req.(*PlaceOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -188,6 +222,10 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserCart",
 			Handler:    _OrderService_GetUserCart_Handler,
+		},
+		{
+			MethodName: "PlaceOrder",
+			Handler:    _OrderService_PlaceOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
