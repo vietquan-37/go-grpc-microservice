@@ -5,12 +5,17 @@ import (
 )
 
 type Config struct {
-	DbSource        string `mapstructure:"DB_SOURCE"`
-	GrpcAddr        string `mapstructure:"GRPC_SERVER_ADDRESS"`
-	ServiceName     string `mapstructure:"SERVICE_NAME"`
-	AuthServiceName string `mapstructure:"AUTH_SERVICE_NAME"`
-	ConsulAddr      string `mapstructure:"CONSUL_ADDR"`
-	Mode            string `mapstructure:"MODE"`
+	DbSource        string   `mapstructure:"DB_SOURCE"`
+	GrpcAddr        string   `mapstructure:"GRPC_SERVER_ADDRESS"`
+	ServiceName     string   `mapstructure:"SERVICE_NAME"`
+	AuthServiceName string   `mapstructure:"AUTH_SERVICE_NAME"`
+	ConsulAddr      string   `mapstructure:"CONSUL_ADDR"`
+	BrokerAddr      []string `mapstructure:"BROKER_ADDR"`
+	PaymentTopic    string   `mapstructure:"PAYMENT_TOPIC"`
+	WorkerCount     int      `mapstructure:"WORKER_COUNT"`
+	MaxRetries      int      `mapstructure:"MAX_RETRIES"`
+	DLQTOPIC        string   `mapstructure:"DLQ_TOPIC"`
+	GroupId         string   `mapstructure:"GROUP_ID"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 var interruptSignal = []os.Signal{os.Interrupt, syscall.SIGTERM, syscall.SIGINT}
@@ -39,6 +40,8 @@ func (a *App) Run() error {
 	}
 
 	<-ctx.Done()
-	a.server.gracefulShutdown()
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	a.server.gracefulShutdown(shutdownCtx)
 	return nil
 }

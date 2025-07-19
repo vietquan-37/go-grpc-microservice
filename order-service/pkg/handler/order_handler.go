@@ -178,7 +178,7 @@ func (h *OrderHandler) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest
 	}
 	ids := make([]int32, 0, len(order.OrderDetail))
 	for _, id := range order.OrderDetail {
-		ids = append(ids, id.Id)
+		ids = append(ids, id.ProductId)
 	}
 	products, err := h.ProductClient.FindProducts(ctx, ids)
 	if err != nil {

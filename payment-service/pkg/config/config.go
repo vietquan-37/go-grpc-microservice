@@ -7,6 +7,7 @@ type Config struct {
 	StripeSignature string `mapstructure:"STRIPE_SIGNATURE"`
 	ServiceName     string `mapstructure:"SERVICE_NAME"`
 	GrpcAddress     string `mapstructure:"GRPC_ADDRESS"`
+	WebhookAddress  string `mapstructure:"WEBHOOK_ADDRESS"`
 	ConsulAddress   string `mapstructure:"CONSUL_ADDRESS"`
 	BrokerAddress   string `mapstructure:"BROKER_ADDRESS"`
 	Topic           string `mapstructure:"TOPIC"`

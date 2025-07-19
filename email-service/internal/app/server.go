@@ -92,8 +92,6 @@ func (s *Server) gracefulShutdown() {
 
 	// Cancel context to stop consumer
 	s.cancel()
-
-	// Wait for goroutines to finish
 	s.wg.Wait()
 	log.Info().Msg("Waiting for goroutines to finish")
 

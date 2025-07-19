@@ -5,23 +5,28 @@ import (
 	"common/discovery"
 	"common/discovery/consul"
 	"common/interceptor"
+	"common/kafka/producer"
+	kafka_retry "common/kafka/retry"
 	"common/loggers"
 	"common/mtdt"
 	"common/routes"
 	"common/timeout"
 	"common/validate"
+	"context"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/rs/zerolog/log"
+	"github.com/vietquan-37/product-service/pkg/consumer"
 	"github.com/vietquan-37/product-service/pkg/pb"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 	"net"
-
-	"github.com/vietquan-37/product-service/pkg/repository"
+	"sync"
 	"time"
 
 	"github.com/vietquan-37/product-service/pkg/config"
 	"github.com/vietquan-37/product-service/pkg/db"
 	"github.com/vietquan-37/product-service/pkg/handler"
+	"github.com/vietquan-37/product-service/pkg/repository"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"gorm.io/gorm"
@@ -45,6 +50,12 @@ type Server struct {
 	db         *gorm.DB
 	registry   *consul.Registry
 	instanceId string
+	producer   *producer.Producer
+	consumer   *kafka_retry.ConsumerWithRetry
+	ctx        context.Context
+	cancel     context.CancelFunc
+
+	wg         *sync.WaitGroup
 	grpcServer *grpc.Server
 	healthSrv  *health.Server
 }
@@ -54,11 +65,16 @@ func newService() *Server {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}
+	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Server{
 		config: c,
+		ctx:    ctx,
+		cancel: cancel,
+		wg:     &sync.WaitGroup{},
 	}
 }
+
 func (s *Server) initialize() error {
 	if err := s.setupDatabase(); err != nil {
 		return err
@@ -66,8 +82,12 @@ func (s *Server) initialize() error {
 	if err := s.setupServiceRegistry(); err != nil {
 		return err
 	}
+	// Setup producer and consumer after database is ready
+	s.setUpProducer()
+	s.setupConsumer()
 	return nil
 }
+
 func (s *Server) setupServiceRegistry() error {
 	registry, err := consul.NewRegistry(s.config.ConsulAddr)
 	if err != nil {
@@ -80,10 +100,12 @@ func (s *Server) setupServiceRegistry() error {
 	}
 	return consul.RegisterConsulResolver(s.registry.Client)
 }
+
 func (s *Server) setupDatabase() error {
 	s.db = db.DbConn(s.config.DbSource)
 	return nil
 }
+
 func (s *Server) setupGrpcServer() error {
 	dependencies, err := s.setupDependencies()
 	if err != nil {
@@ -98,6 +120,7 @@ func (s *Server) setupGrpcServer() error {
 	s.setupHealthCheck()
 	return nil
 }
+
 func (s *Server) setupInterceptor() []grpc.UnaryServerInterceptor {
 	validateInterceptor, err := validate.NewValidationInterceptor()
 	if err != nil {
@@ -124,27 +147,43 @@ func (s *Server) setupHealthCheck() {
 	healthpb.RegisterHealthServer(s.grpcServer, s.healthSrv)
 	s.healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 }
+
 func (s *Server) cleanup() {
 	if s.registry != nil && s.instanceId != "" {
 		s.registry.Deregister(s.instanceId, s.config.ServiceName)
 	}
 }
+
 func (s *Server) Start() error {
 	lis, err := net.Listen("tcp", s.config.GrpcAddr)
 	if err != nil {
 		return err
 	}
 
+	s.wg.Add(1)
 	go func() {
-		log.Info().Msgf("Starting gRPC server at %s", lis.Addr().String())
-		if err := s.grpcServer.Serve(lis); err != nil {
-			log.Fatal().Err(err).Msg("gRPC server failed")
+		defer s.wg.Done()
+		log.Info().Msg("Starting Kafka consumer...")
+		if err := s.consumer.Start(s.ctx); err != nil {
+			log.Error().Err(err).Msg("Kafka consumer stopped with error")
 		}
+		log.Info().Msg("Kafka consumer stopped")
 	}()
 
-	log.Info().Msg("gRPC server started")
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		log.Info().Msgf("Starting gRPC server at %s", lis.Addr().String())
+		if err := s.grpcServer.Serve(lis); err != nil {
+			log.Error().Err(err).Msg("gRPC server failed")
+		}
+		log.Info().Msg("gRPC server stopped")
+	}()
+
+	log.Info().Msg("All services started")
 	return nil
 }
+
 func (s *Server) gracefulShutdown() {
 	log.Info().Msg("Shutting down server...")
 
@@ -152,21 +191,60 @@ func (s *Server) gracefulShutdown() {
 		s.healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
 	}
 
-	log.Info().Msg("waiting for goroutines to finish")
-
 	if s.grpcServer != nil {
+		log.Info().Msg("Stopping gRPC server...")
 		s.grpcServer.GracefulStop()
 	}
 
+	if s.cancel != nil {
+		s.cancel()
+	}
+
+	log.Info().Msg("Waiting for all goroutines to finish...")
+	s.wg.Wait()
+
 	log.Info().Msg("Server stopped gracefully")
 }
+
 func (s *Server) startHealthCheck() {
+	s.wg.Add(1)
 	go func() {
+		defer s.wg.Done()
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
 		for {
-			if err := s.registry.HealthCheck(s.instanceId); err != nil {
-				log.Fatal().Err(err).Msg("failed to health check service")
+			select {
+			case <-s.ctx.Done():
+				log.Info().Msg("Health check stopped")
+				return
+			case <-ticker.C:
+				if err := s.registry.HealthCheck(s.instanceId); err != nil {
+					log.Error().Err(err).Msg("Health check failed")
+				}
 			}
-			time.Sleep(1 * time.Second)
 		}
 	}()
+}
+
+func (s *Server) setUpProducer() {
+	s.producer = producer.NewProducerSafe(s.config.BrokerAddr...)
+}
+
+func (s *Server) setupConsumer() {
+	repo := repository.NewProductRepo(s.db)
+	productConsumer := consumer.NewProductConsumer(repo, s.config, s.producer)
+	s.consumer = kafka_retry.NewConsumerWithRetry(
+		s.config.BrokerAddr,
+		s.config.PaymentTopic,
+		s.config.GroupId,
+		productConsumer,
+		s.config.MaxRetries,
+		func() backoff.BackOff {
+			return backoff.NewExponentialBackOff(
+				backoff.WithMaxElapsedTime(20 * time.Second),
+			)
+		},
+		s.config.WorkerCount,
+	)
 }

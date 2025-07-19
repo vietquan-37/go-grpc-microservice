@@ -11,11 +11,10 @@ message PaymentLinkRequest{
 
 }
 message Items{
-  int32 id = 1;
-  int32 product_id = 2;
-  string product_name=3;
-  int64 quantity = 4;
-  float price = 5;
+  int32 product_id = 1;
+  string product_name=2;
+  int64 quantity = 3;
+  float price = 4;
 }
 
 service PaymentService {

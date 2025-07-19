@@ -2,6 +2,8 @@ package kafka_retry
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/rs/zerolog/log"
 
 	"time"
@@ -12,7 +14,7 @@ import (
 
 type ProcessRetryHandler interface {
 	Process(context.Context, kafka.Message) error
-	MoveToDLQ(context.Context, kafka.Message)
+	MoveToDLQ(context.Context, kafka.Message, error)
 }
 
 type ConsumerWithRetry struct {
@@ -24,11 +26,17 @@ type ConsumerWithRetry struct {
 	retryQueue  chan kafka.Message
 }
 
-func NewConsumerWithRetry(reader *kafka.Reader, handler ProcessRetryHandler, maxRetries int, backoffFunc func() backoff.BackOff, workerCount int) *ConsumerWithRetry {
+func NewConsumerWithRetry(brokers []string, topic string, groupId string, handler ProcessRetryHandler, maxRetries int, backoffFunc func() backoff.BackOff, workerCount int) *ConsumerWithRetry {
 	if workerCount <= 0 {
 		workerCount = 1
 	}
-
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  brokers,
+		Topic:    topic,
+		GroupID:  groupId,
+		MinBytes: 10e3,
+		MaxBytes: 10e6,
+	})
 	return &ConsumerWithRetry{
 		reader:      reader,
 		handler:     handler,
@@ -66,43 +74,46 @@ func (c *ConsumerWithRetry) retryWorker(ctx context.Context, workerID int) {
 	}
 }
 
-func (c *ConsumerWithRetry) handleRetry(ctx context.Context, msg kafka.Message, workerID int) {
+func (c *ConsumerWithRetry) handleRetry(ctx context.Context, msg kafka.Message, id int) {
 	retries := 0
 	bo := c.backoffFunc()
 	bo.Reset()
 
 	for retries < c.maxRetries {
 		if ctx.Err() != nil {
-			log.Error().Msgf("Worker %d: context canceled during retry", workerID)
 			return
 		}
-
 		retries++
-		log.Info().Msgf("Worker %d: Retry %d for message %s", workerID, retries, string(msg.Key))
+		log.Info().Msgf("Worker %d retry attempt %d for key=%s", id, retries, string(msg.Key))
 
-		if err := c.handler.Process(ctx, msg); err != nil {
-			log.Error().Msgf("Worker %d: Processing error: %v", workerID, err)
-			time.Sleep(bo.NextBackOff())
-		} else {
-			log.Info().Msgf("Worker %d: Successfully processed message %s", workerID, string(msg.Key))
-			if err := c.reader.CommitMessages(ctx, msg); err != nil {
-				log.Error().Msgf("Worker %d: Commit failed after retry: %v", workerID, err)
+		err := c.handler.Process(ctx, msg)
+		if err == nil {
+
+			if commitErr := c.reader.CommitMessages(ctx, msg); commitErr != nil {
+				log.Error().Err(commitErr).Msg("Failed commit after retry success")
 			}
 			return
 		}
+
+		if !ShouldRetry(err) {
+			log.Info().Msgf("Non-retryable error after retries for key=%s: %v", string(msg.Key), err)
+			c.handler.MoveToDLQ(ctx, msg, err)
+			return
+		}
+
+		log.Error().Err(err).Msg("Retryable error, backing off before next attempt")
+		time.Sleep(bo.NextBackOff())
 	}
 
-	log.Info().Msgf("Worker %d: Max retries exceeded for %s, moving to DLQ", workerID, string(msg.Key))
-	c.handler.MoveToDLQ(ctx, msg)
+	log.Info().Msgf("Max retries exceeded for key=%s, moving to DLQ", string(msg.Key))
+	c.handler.MoveToDLQ(ctx, msg, fmt.Errorf("max retries exceeded"))
 }
 
-// TODO: Phân biệt các lỗi có thể retry hoặc ko
 func (c *ConsumerWithRetry) consumeLoop(ctx context.Context) error {
 	defer close(c.retryQueue)
 	for {
 		select {
 		case <-ctx.Done():
-
 			return c.reader.Close()
 		default:
 			msg, err := c.reader.FetchMessage(ctx)
@@ -112,12 +123,19 @@ func (c *ConsumerWithRetry) consumeLoop(ctx context.Context) error {
 			}
 
 			if err := c.handler.Process(ctx, msg); err != nil {
-				log.Printf("Processing failed for %s, adding to retry queue", string(msg.Key))
-				select {
-				case c.retryQueue <- msg:
-				default:
-					log.Error().Msg("Retry queue full, moving message to DLQ")
-					c.handler.MoveToDLQ(ctx, msg)
+				if !ShouldRetry(err) {
+					log.Printf("Processing failed for %s, adding to retry queue", string(msg.Key))
+					select {
+					case c.retryQueue <- msg:
+					default:
+						log.Error().Msg("Retry queue full, moving message to DLQ")
+						c.handler.MoveToDLQ(ctx, msg, err)
+					}
+				} else {
+					c.handler.MoveToDLQ(ctx, msg, err)
+					if commitErr := c.reader.CommitMessages(ctx, msg); commitErr != nil {
+						log.Error().Err(commitErr).Msg("Failed commit after DLQ move")
+					}
 				}
 				continue
 			}
@@ -127,4 +145,10 @@ func (c *ConsumerWithRetry) consumeLoop(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+type DLQMessage struct {
+	OriginalMessage json.RawMessage `json:"original_message"`
+	Error           string          `json:"error"`
+	FailedAt        time.Time       `json:"failed_at"`
 }

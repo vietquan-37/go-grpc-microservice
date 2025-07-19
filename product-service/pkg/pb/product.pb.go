@@ -403,58 +403,6 @@ func (x *GetProductsRequest) GetId() []int32 {
 	return nil
 }
 
-type DecreaseStockRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProductId     int32                  `protobuf:"varint,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
-	Quantity      int64                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DecreaseStockRequest) Reset() {
-	*x = DecreaseStockRequest{}
-	mi := &file_product_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DecreaseStockRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DecreaseStockRequest) ProtoMessage() {}
-
-func (x *DecreaseStockRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_product_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DecreaseStockRequest.ProtoReflect.Descriptor instead.
-func (*DecreaseStockRequest) Descriptor() ([]byte, []int) {
-	return file_product_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *DecreaseStockRequest) GetProductId() int32 {
-	if x != nil {
-		return x.ProductId
-	}
-	return 0
-}
-
-func (x *DecreaseStockRequest) GetQuantity() int64 {
-	if x != nil {
-		return x.Quantity
-	}
-	return 0
-}
-
 var File_product_proto protoreflect.FileDescriptor
 
 const file_product_proto_rawDesc = "" +
@@ -487,18 +435,13 @@ const file_product_proto_rawDesc = "" +
 	"\x0eCommonResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"$\n" +
 	"\x12GetProductsRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x03(\x05R\x02id\"Z\n" +
-	"\x14DecreaseStockRequest\x12\x1d\n" +
-	"\n" +
-	"product_id\x18\x01 \x01(\x05R\tproductId\x12#\n" +
-	"\bquantity\x18\x02 \x01(\x03B\a\xbaH\x04\"\x02 \x00R\bquantity2\xb6\x04\n" +
+	"\x02id\x18\x01 \x03(\x05R\x02id2\xe0\x03\n" +
 	"\x0eProductService\x12N\n" +
 	"\rCreateProduct\x12\x1f.productpb.CreateProductRequest\x1a\x1a.productpb.ProductResponse\"\x00\x12G\n" +
 	"\rDeleteProduct\x12\x19.productpb.ProductRequest\x1a\x19.productpb.CommonResponse\"\x00\x12J\n" +
 	"\x0efindAllProduct\x12\x16.google.protobuf.Empty\x1a\x1e.productpb.ProductResponseList\"\x00\x12I\n" +
 	"\x0efindOneProduct\x12\x19.productpb.ProductRequest\x1a\x1a.productpb.ProductResponse\"\x00\x12N\n" +
-	"\rupdateProduct\x12\x1f.productpb.UpdateProductRequest\x1a\x1a.productpb.ProductResponse\"\x00\x12T\n" +
-	"\x14DecreaseProductStock\x12\x1f.productpb.DecreaseStockRequest\x1a\x19.productpb.CommonResponse\"\x00\x12N\n" +
+	"\rupdateProduct\x12\x1f.productpb.UpdateProductRequest\x1a\x1a.productpb.ProductResponse\"\x00\x12N\n" +
 	"\vGetProducts\x12\x1d.productpb.GetProductsRequest\x1a\x1e.productpb.ProductResponseList\"\x00B\x90\x01\n" +
 	"\rcom.productpbB\fProductProtoP\x01Z-github.com/vietquan-37/product-service/pkg/pb\xa2\x02\x03PXX\xaa\x02\tProductpb\xca\x02\tProductpb\xe2\x02\x15Productpb\\GPBMetadata\xea\x02\tProductpbb\x06proto3"
 
@@ -514,7 +457,7 @@ func file_product_proto_rawDescGZIP() []byte {
 	return file_product_proto_rawDescData
 }
 
-var file_product_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_product_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_product_proto_goTypes = []any{
 	(*CreateProductRequest)(nil), // 0: productpb.CreateProductRequest
 	(*ProductResponse)(nil),      // 1: productpb.ProductResponse
@@ -523,27 +466,24 @@ var file_product_proto_goTypes = []any{
 	(*ProductRequest)(nil),       // 4: productpb.ProductRequest
 	(*CommonResponse)(nil),       // 5: productpb.CommonResponse
 	(*GetProductsRequest)(nil),   // 6: productpb.GetProductsRequest
-	(*DecreaseStockRequest)(nil), // 7: productpb.DecreaseStockRequest
-	(*emptypb.Empty)(nil),        // 8: google.protobuf.Empty
+	(*emptypb.Empty)(nil),        // 7: google.protobuf.Empty
 }
 var file_product_proto_depIdxs = []int32{
 	1, // 0: productpb.ProductResponseList.products:type_name -> productpb.ProductResponse
 	0, // 1: productpb.ProductService.CreateProduct:input_type -> productpb.CreateProductRequest
 	4, // 2: productpb.ProductService.DeleteProduct:input_type -> productpb.ProductRequest
-	8, // 3: productpb.ProductService.findAllProduct:input_type -> google.protobuf.Empty
+	7, // 3: productpb.ProductService.findAllProduct:input_type -> google.protobuf.Empty
 	4, // 4: productpb.ProductService.findOneProduct:input_type -> productpb.ProductRequest
 	3, // 5: productpb.ProductService.updateProduct:input_type -> productpb.UpdateProductRequest
-	7, // 6: productpb.ProductService.DecreaseProductStock:input_type -> productpb.DecreaseStockRequest
-	6, // 7: productpb.ProductService.GetProducts:input_type -> productpb.GetProductsRequest
-	1, // 8: productpb.ProductService.CreateProduct:output_type -> productpb.ProductResponse
-	5, // 9: productpb.ProductService.DeleteProduct:output_type -> productpb.CommonResponse
-	2, // 10: productpb.ProductService.findAllProduct:output_type -> productpb.ProductResponseList
-	1, // 11: productpb.ProductService.findOneProduct:output_type -> productpb.ProductResponse
-	1, // 12: productpb.ProductService.updateProduct:output_type -> productpb.ProductResponse
-	5, // 13: productpb.ProductService.DecreaseProductStock:output_type -> productpb.CommonResponse
-	2, // 14: productpb.ProductService.GetProducts:output_type -> productpb.ProductResponseList
-	8, // [8:15] is the sub-list for method output_type
-	1, // [1:8] is the sub-list for method input_type
+	6, // 6: productpb.ProductService.GetProducts:input_type -> productpb.GetProductsRequest
+	1, // 7: productpb.ProductService.CreateProduct:output_type -> productpb.ProductResponse
+	5, // 8: productpb.ProductService.DeleteProduct:output_type -> productpb.CommonResponse
+	2, // 9: productpb.ProductService.findAllProduct:output_type -> productpb.ProductResponseList
+	1, // 10: productpb.ProductService.findOneProduct:output_type -> productpb.ProductResponse
+	1, // 11: productpb.ProductService.updateProduct:output_type -> productpb.ProductResponse
+	2, // 12: productpb.ProductService.GetProducts:output_type -> productpb.ProductResponseList
+	7, // [7:13] is the sub-list for method output_type
+	1, // [1:7] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -560,7 +500,7 @@ func file_product_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_product_proto_rawDesc), len(file_product_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

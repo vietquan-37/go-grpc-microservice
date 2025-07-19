@@ -32,7 +32,6 @@ func convertItemsCart(detail model.OrderDetail, name string) *pb.ItemCart {
 }
 func convertItems(detail model.OrderDetail, name string) *pb.Items {
 	return &pb.Items{
-		Id:          detail.Id,
 		ProductId:   detail.ProductId,
 		Price:       float32(detail.Price),
 		ProductName: name,

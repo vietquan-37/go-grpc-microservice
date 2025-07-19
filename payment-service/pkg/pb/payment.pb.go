@@ -127,11 +127,10 @@ func (x *PaymentLinkRequest) GetItems() []*Items {
 
 type Items struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProductId     int32                  `protobuf:"varint,2,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
-	ProductName   string                 `protobuf:"bytes,3,opt,name=product_name,json=productName,proto3" json:"product_name,omitempty"`
-	Quantity      int64                  `protobuf:"varint,4,opt,name=quantity,proto3" json:"quantity,omitempty"`
-	Price         float32                `protobuf:"fixed32,5,opt,name=price,proto3" json:"price,omitempty"`
+	ProductId     int32                  `protobuf:"varint,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	ProductName   string                 `protobuf:"bytes,2,opt,name=product_name,json=productName,proto3" json:"product_name,omitempty"`
+	Quantity      int64                  `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	Price         float32                `protobuf:"fixed32,4,opt,name=price,proto3" json:"price,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -164,13 +163,6 @@ func (x *Items) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Items.ProtoReflect.Descriptor instead.
 func (*Items) Descriptor() ([]byte, []int) {
 	return file_payment_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *Items) GetId() int32 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
 }
 
 func (x *Items) GetProductId() int32 {
@@ -211,14 +203,13 @@ const file_payment_proto_rawDesc = "" +
 	"\x12PaymentLinkRequest\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\x05R\aorderId\x12\x16\n" +
 	"\x06amount\x18\x02 \x01(\x02R\x06amount\x12&\n" +
-	"\x05items\x18\x03 \x03(\v2\x10.paymentpb.ItemsR\x05items\"\x8b\x01\n" +
-	"\x05Items\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1d\n" +
+	"\x05items\x18\x03 \x03(\v2\x10.paymentpb.ItemsR\x05items\"{\n" +
+	"\x05Items\x12\x1d\n" +
 	"\n" +
-	"product_id\x18\x02 \x01(\x05R\tproductId\x12!\n" +
-	"\fproduct_name\x18\x03 \x01(\tR\vproductName\x12\x1a\n" +
-	"\bquantity\x18\x04 \x01(\x03R\bquantity\x12\x14\n" +
-	"\x05price\x18\x05 \x01(\x02R\x05price2f\n" +
+	"product_id\x18\x01 \x01(\x05R\tproductId\x12!\n" +
+	"\fproduct_name\x18\x02 \x01(\tR\vproductName\x12\x1a\n" +
+	"\bquantity\x18\x03 \x01(\x03R\bquantity\x12\x14\n" +
+	"\x05price\x18\x04 \x01(\x02R\x05price2f\n" +
 	"\x0ePaymentService\x12T\n" +
 	"\x11CreatePaymentLink\x12\x1d.paymentpb.PaymentLinkRequest\x1a\x1e.paymentpb.PaymentLinkResponse\"\x00B\x90\x01\n" +
 	"\rcom.paymentpbB\fPaymentProtoP\x01Z-github.com/vietquan-37/payment-service/pkg/pb\xa2\x02\x03PXX\xaa\x02\tPaymentpb\xca\x02\tPaymentpb\xe2\x02\x15Paymentpb\\GPBMetadata\xea\x02\tPaymentpbb\x06proto3"

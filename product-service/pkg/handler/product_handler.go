@@ -48,26 +48,7 @@ func (h *ProductHandler) UpdateProduct(ctx context.Context, req *pb.UpdateProduc
 	rsp := convertToProductResponse(product)
 	return rsp, nil
 }
-func (h *ProductHandler) DecreaseProductStock(ctx context.Context, req *pb.DecreaseStockRequest) (*pb.CommonResponse, error) {
-	product, err := h.Repo.FindProduct(ctx, req.GetProductId())
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, status.Errorf(codes.NotFound, "product not found")
-		}
-		return nil, status.Errorf(codes.Internal, "error while finding product : %s", err.Error())
-	}
-	if product.Stock < req.Quantity {
-		return nil, status.Errorf(codes.InvalidArgument, "product %s stock is insufficient", product.Name)
-	}
-	product.Stock -= req.Quantity
-	product, err = h.Repo.UpdateProduct(ctx, product)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error while updating product : %s", err.Error())
-	}
-	return &pb.CommonResponse{
-		Message: "Product stock updated",
-	}, nil
-}
+
 func (h *ProductHandler) FindOneProduct(ctx context.Context, req *pb.ProductRequest) (*pb.ProductResponse, error) {
 
 	product, err := h.Repo.FindProduct(ctx, req.GetId())
