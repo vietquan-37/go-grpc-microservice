@@ -68,8 +68,9 @@ func (x *PaymentLinkResponse) GetLink() string {
 type PaymentLinkRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OrderId       int32                  `protobuf:"varint,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	Amount        float32                `protobuf:"fixed32,2,opt,name=amount,proto3" json:"amount,omitempty"`
-	Items         []*Items               `protobuf:"bytes,3,rep,name=items,proto3" json:"items,omitempty"`
+	Customer      *CustomerInfo          `protobuf:"bytes,2,opt,name=customer,proto3" json:"customer,omitempty"`
+	Amount        float32                `protobuf:"fixed32,3,opt,name=amount,proto3" json:"amount,omitempty"`
+	Items         []*Items               `protobuf:"bytes,4,rep,name=items,proto3" json:"items,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -111,6 +112,13 @@ func (x *PaymentLinkRequest) GetOrderId() int32 {
 	return 0
 }
 
+func (x *PaymentLinkRequest) GetCustomer() *CustomerInfo {
+	if x != nil {
+		return x.Customer
+	}
+	return nil
+}
+
 func (x *PaymentLinkRequest) GetAmount() float32 {
 	if x != nil {
 		return x.Amount
@@ -125,6 +133,66 @@ func (x *PaymentLinkRequest) GetItems() []*Items {
 	return nil
 }
 
+type CustomerInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CustomerId    int32                  `protobuf:"varint,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	CustomerName  string                 `protobuf:"bytes,2,opt,name=customer_name,json=customerName,proto3" json:"customer_name,omitempty"`
+	CustomerEmail string                 `protobuf:"bytes,3,opt,name=customer_email,json=customerEmail,proto3" json:"customer_email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CustomerInfo) Reset() {
+	*x = CustomerInfo{}
+	mi := &file_payment_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CustomerInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CustomerInfo) ProtoMessage() {}
+
+func (x *CustomerInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_payment_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CustomerInfo.ProtoReflect.Descriptor instead.
+func (*CustomerInfo) Descriptor() ([]byte, []int) {
+	return file_payment_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *CustomerInfo) GetCustomerId() int32 {
+	if x != nil {
+		return x.CustomerId
+	}
+	return 0
+}
+
+func (x *CustomerInfo) GetCustomerName() string {
+	if x != nil {
+		return x.CustomerName
+	}
+	return ""
+}
+
+func (x *CustomerInfo) GetCustomerEmail() string {
+	if x != nil {
+		return x.CustomerEmail
+	}
+	return ""
+}
+
 type Items struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProductId     int32                  `protobuf:"varint,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
@@ -137,7 +205,7 @@ type Items struct {
 
 func (x *Items) Reset() {
 	*x = Items{}
-	mi := &file_payment_proto_msgTypes[2]
+	mi := &file_payment_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -149,7 +217,7 @@ func (x *Items) String() string {
 func (*Items) ProtoMessage() {}
 
 func (x *Items) ProtoReflect() protoreflect.Message {
-	mi := &file_payment_proto_msgTypes[2]
+	mi := &file_payment_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -162,7 +230,7 @@ func (x *Items) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Items.ProtoReflect.Descriptor instead.
 func (*Items) Descriptor() ([]byte, []int) {
-	return file_payment_proto_rawDescGZIP(), []int{2}
+	return file_payment_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Items) GetProductId() int32 {
@@ -199,11 +267,17 @@ const file_payment_proto_rawDesc = "" +
 	"\n" +
 	"\rpayment.proto\x12\tpaymentpb\")\n" +
 	"\x13PaymentLinkResponse\x12\x12\n" +
-	"\x04link\x18\x01 \x01(\tR\x04link\"o\n" +
+	"\x04link\x18\x01 \x01(\tR\x04link\"\xa4\x01\n" +
 	"\x12PaymentLinkRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\x05R\aorderId\x12\x16\n" +
-	"\x06amount\x18\x02 \x01(\x02R\x06amount\x12&\n" +
-	"\x05items\x18\x03 \x03(\v2\x10.paymentpb.ItemsR\x05items\"{\n" +
+	"\border_id\x18\x01 \x01(\x05R\aorderId\x123\n" +
+	"\bcustomer\x18\x02 \x01(\v2\x17.paymentpb.CustomerInfoR\bcustomer\x12\x16\n" +
+	"\x06amount\x18\x03 \x01(\x02R\x06amount\x12&\n" +
+	"\x05items\x18\x04 \x03(\v2\x10.paymentpb.ItemsR\x05items\"{\n" +
+	"\fCustomerInfo\x12\x1f\n" +
+	"\vcustomer_id\x18\x01 \x01(\x05R\n" +
+	"customerId\x12#\n" +
+	"\rcustomer_name\x18\x02 \x01(\tR\fcustomerName\x12%\n" +
+	"\x0ecustomer_email\x18\x03 \x01(\tR\rcustomerEmail\"{\n" +
 	"\x05Items\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x01 \x01(\x05R\tproductId\x12!\n" +
@@ -226,21 +300,23 @@ func file_payment_proto_rawDescGZIP() []byte {
 	return file_payment_proto_rawDescData
 }
 
-var file_payment_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_payment_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_payment_proto_goTypes = []any{
 	(*PaymentLinkResponse)(nil), // 0: paymentpb.PaymentLinkResponse
 	(*PaymentLinkRequest)(nil),  // 1: paymentpb.PaymentLinkRequest
-	(*Items)(nil),               // 2: paymentpb.Items
+	(*CustomerInfo)(nil),        // 2: paymentpb.CustomerInfo
+	(*Items)(nil),               // 3: paymentpb.Items
 }
 var file_payment_proto_depIdxs = []int32{
-	2, // 0: paymentpb.PaymentLinkRequest.items:type_name -> paymentpb.Items
-	1, // 1: paymentpb.PaymentService.CreatePaymentLink:input_type -> paymentpb.PaymentLinkRequest
-	0, // 2: paymentpb.PaymentService.CreatePaymentLink:output_type -> paymentpb.PaymentLinkResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 0: paymentpb.PaymentLinkRequest.customer:type_name -> paymentpb.CustomerInfo
+	3, // 1: paymentpb.PaymentLinkRequest.items:type_name -> paymentpb.Items
+	1, // 2: paymentpb.PaymentService.CreatePaymentLink:input_type -> paymentpb.PaymentLinkRequest
+	0, // 3: paymentpb.PaymentService.CreatePaymentLink:output_type -> paymentpb.PaymentLinkResponse
+	3, // [3:4] is the sub-list for method output_type
+	2, // [2:3] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_payment_proto_init() }
@@ -254,7 +330,7 @@ func file_payment_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_payment_proto_rawDesc), len(file_payment_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

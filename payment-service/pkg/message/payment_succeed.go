@@ -7,8 +7,9 @@ import (
 )
 
 type PaymentSucceededMessage struct {
-	OrderID int32           `json:"order_id"`
-	Items   []ItemPurchased `json:"items"`
+	OrderID  int32           `json:"order_id"`
+	Customer Customer        `json:"customer"`
+	Items    []ItemPurchased `json:"items"`
 }
 
 type ItemPurchased struct {
@@ -16,6 +17,11 @@ type ItemPurchased struct {
 	ProductName string  `json:"product_name"`
 	Quantity    int64   `json:"quantity"`
 	Price       float64 `json:"price"`
+}
+type Customer struct {
+	CustomerID    int32  `json:"customer_id"`
+	CustomerEmail string `json:"customer_email"`
+	CustomerName  string `json:"customer_name"`
 }
 
 func NewPaymentEnvelope(source, version string, payload PaymentSucceededMessage) (*event.Envelope, error) {

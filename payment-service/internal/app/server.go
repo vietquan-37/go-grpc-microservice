@@ -31,6 +31,8 @@ type Server struct {
 	instanceId   string
 	grpcServer   *grpc.Server
 	httpServer   *http.Server
+	ctx          context.Context
+	cancel       context.CancelFunc
 	healthServer *health.Server
 }
 
@@ -39,9 +41,11 @@ func newServer() *Server {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}
-
+	ctx, cancel := context.WithCancel(context.Background())
 	return &Server{
-		cfg: c,
+		cfg:    c,
+		ctx:    ctx,
+		cancel: cancel,
 	}
 }
 func (s *Server) initialize() error {
@@ -95,22 +99,29 @@ func (s *Server) setupHealthCheck() {
 }
 
 func (s *Server) startHealthCheck() {
+
 	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
 		for {
-			if err := s.registry.HealthCheck(s.instanceId); err != nil {
-				log.Fatal().Err(err).Msg("failed to health check service")
+			select {
+			case <-s.ctx.Done():
+				log.Info().Msg("Health check stopped")
+				return
+			case <-ticker.C:
+				if err := s.registry.HealthCheck(s.instanceId); err != nil {
+					log.Error().Err(err).Msg("Health check failed")
+				}
 			}
-			time.Sleep(1 * time.Second)
 		}
 	}()
 }
 func (s *Server) start() error {
-	// Start gRPC server
 	if err := s.startGrpcServer(); err != nil {
 		return err
 	}
 
-	// Start HTTP server
 	if err := s.startHTTPServer(); err != nil {
 		return err
 	}
@@ -123,8 +134,8 @@ func (s *Server) startGrpcServer() error {
 	if err != nil {
 		return err
 	}
-
 	go func() {
+
 		log.Info().Msgf("Starting gRPC server at %s", lis.Addr().String())
 		if err := s.grpcServer.Serve(lis); err != nil {
 			log.Fatal().Err(err).Msg("gRPC server failed")
@@ -136,6 +147,7 @@ func (s *Server) startGrpcServer() error {
 }
 func (s *Server) startHTTPServer() error {
 	s.setupHTTPServer()
+
 	go func() {
 		log.Info().Msgf("Starting HTTP server at %s", s.cfg.WebhookAddress)
 		if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -152,49 +164,19 @@ func (s *Server) gracefulShutdown(ctx context.Context) {
 	if s.healthServer != nil {
 		s.healthServer.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
 	}
-	done := make(chan bool, 2)
-
-	// Shutdown HTTP server
-	go func() {
-		if s.httpServer != nil {
-			if err := s.httpServer.Shutdown(ctx); err != nil {
-				log.Error().Err(err).Msg("HTTP server shutdown error")
-			} else {
-				log.Info().Msg("HTTP server stopped gracefully")
-			}
+	if s.httpServer != nil {
+		if err := s.httpServer.Shutdown(ctx); err != nil {
+			log.Error().Err(err).Msg("HTTP server shutdown error")
+		} else {
+			log.Info().Msg("HTTP server stopped gracefully")
 		}
-		done <- true
-	}()
-
-	// Shutdown gRPC server
-	go func() {
-		if s.grpcServer != nil {
-			// Graceful stop với timeout
-			stopped := make(chan struct{})
-			go func() {
-				s.grpcServer.GracefulStop()
-				close(stopped)
-			}()
-
-			select {
-			case <-stopped:
-				log.Info().Msg("gRPC server stopped gracefully")
-			case <-ctx.Done():
-				log.Warn().Msg("gRPC server graceful stop timeout, forcing stop")
-				s.grpcServer.Stop()
-			}
-		}
-		done <- true
-	}()
-
-	for i := 0; i < 2; i++ {
-		select {
-		case <-done:
-			// Server stopped
-		case <-ctx.Done():
-			log.Warn().Msg("Shutdown timeout reached")
-			return
-		}
+	}
+	if s.grpcServer != nil {
+		log.Info().Msg("Stopping gRPC server...")
+		s.grpcServer.GracefulStop()
+	}
+	if s.cancel != nil {
+		s.cancel()
 	}
 
 	log.Info().Msg("All servers stopped gracefully")

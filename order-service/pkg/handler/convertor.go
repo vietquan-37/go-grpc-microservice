@@ -1,6 +1,7 @@
 package handler
 
 import (
+	commonpb "common/pb"
 	"github.com/vietquan-37/order-service/pkg/model"
 	"github.com/vietquan-37/order-service/pkg/pb"
 )
@@ -46,4 +47,12 @@ func covertToItems(order *model.Order, productMap map[int32]string) []*pb.Items 
 		items = append(items, item)
 	}
 	return items
+}
+func convertUser(meta *commonpb.ValidateRsp) *pb.CustomerInfo {
+	user := meta.GetUser()
+	return &pb.CustomerInfo{
+		CustomerId:    user.UserId,
+		CustomerName:  user.FullName,
+		CustomerEmail: user.UserName,
+	}
 }

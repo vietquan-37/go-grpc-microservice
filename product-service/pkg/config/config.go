@@ -16,6 +16,7 @@ type Config struct {
 	MaxRetries      int      `mapstructure:"MAX_RETRIES"`
 	DLQTOPIC        string   `mapstructure:"DLQ_TOPIC"`
 	GroupId         string   `mapstructure:"GROUP_ID"`
+	OrderTopic      string   `mapstructure:"ORDER_TOPIC"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {

@@ -48,9 +48,12 @@ func (s *Server) initialize() error {
 	return nil
 }
 
-func (s *Server) setupDependencies() error {
+func (s *Server) setupDependencies() (err error) {
 
-	s.emailService = email.NewEmailService(s.config)
+	s.emailService, err = email.NewEmailService(s.config)
+	if err != nil {
+		return err
+	}
 
 	s.messageHandler = handler.NewMessageHandler(s.emailService)
 
@@ -91,7 +94,9 @@ func (s *Server) gracefulShutdown() {
 	log.Info().Msg("Shutting down email service...")
 
 	// Cancel context to stop consumer
-	s.cancel()
+	if s.cancel != nil {
+		s.cancel()
+	}
 	s.wg.Wait()
 	log.Info().Msg("Waiting for goroutines to finish")
 

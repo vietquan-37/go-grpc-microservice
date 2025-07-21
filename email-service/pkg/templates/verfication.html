@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    .email-container {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 10px 10px 0 0;
+      margin: -30px -30px 30px -30px;
+    }
+    .button {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 30px;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 20px 0;
+      font-weight: bold;
+    }
+    .button:hover {
+      opacity: 0.9;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="email-container">
+  <div class="header">
+    <h1>Welcome to {{.CompanyName}}!</h1>
+  </div>
+
+  <h2>Hello {{.FullName}},</h2>
+
+  <p>Thank you for registering with our service! We're excited to have you on board.</p>
+
+  <p>To complete your registration and activate your account, please click the button below:</p>
+
+  <div style="text-align: center;">
+    <a href="{{.ActiveLink}}" class="button">Activate My Account</a>
+  </div>
+
+  <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+  <p style="word-break: break-all; color: #667eea;">{{.ActivationLink}}</p>
+
+  <p><strong>Important:</strong> This verification link will expire in 24 hours for security reasons.</p>
+
+  <p>If you didn't create this account, please ignore this email or contact our support team.</p>
+
+  <p>Best regards,<br>The {{.CompanyName}} Team</p>
+
+  <div class="footer">
+    <p>&copy; {{.Year}} {{.CompanyName}}. All rights reserved.</p>
+    <p>Need help? Contact us at <a href="mailto:{{.SupportEmail}}">{{.SupportEmail}}</a></p>
+  </div>
+</div>
+</body>
+</html>

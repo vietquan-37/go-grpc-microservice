@@ -1,9 +1,11 @@
-PHONY: run-all  buf docker-push docker-build postgres createdb
+PHONY: run-all  buf docker-push docker-build auth-db product-db order-db
 run-all:
-	cd auth-service && start /b make run-server
-	cd order-service && start /b make run-server
-	cd product-service && start /b  make run-server
-	cd gateway && start /b make run-server
+	cd auth-service && make run-server &
+	cd product-service && make run-server &
+	cd order-service && make run-server &
+	cd payment-service && make run-server &
+	cd email-service && make run-server &
+	cd gateway && make run-server &
 buf:
 	@if exist pb\*.go del /Q pb\*.go
 	buf generate
@@ -35,4 +37,5 @@ order-db:
 		-e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=12345 \
 		-e POSTGRES_DB=order_db \
 		-d postgres:16.4
-
+kill-go:
+	@pkill -f 'go run' || true

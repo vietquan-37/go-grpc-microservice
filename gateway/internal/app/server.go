@@ -30,6 +30,8 @@ type Server struct {
 	config     *config.Config
 	registry   *consul.Registry
 	instanceId string
+	ctx        context.Context
+	cancel     context.CancelFunc
 	httpServer *http.Server
 	clients    *ServiceClients
 }
@@ -45,8 +47,12 @@ func newServer() *Server {
 	if err != nil {
 		log.Fatal().Err(err).Msg("fail to load config")
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+
 	return &Server{
 		config: cfg,
+		ctx:    ctx,
+		cancel: cancel,
 	}
 }
 
@@ -185,13 +191,22 @@ func (s *Server) start(ctx context.Context) error {
 
 func (s *Server) startHealthCheck() {
 
-	for {
-		if err := s.registry.HealthCheck(s.instanceId); err != nil {
-			log.Fatal().Err(err).Msg("failed to health check service")
-		}
-		time.Sleep(1 * time.Second)
-	}
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
 
+		for {
+			select {
+			case <-s.ctx.Done():
+				log.Info().Msg("Health check stopped")
+				return
+			case <-ticker.C:
+				if err := s.registry.HealthCheck(s.instanceId); err != nil {
+					log.Error().Err(err).Msg("Health check failed")
+				}
+			}
+		}
+	}()
 }
 
 func (s *Server) gracefulShutdown() error {

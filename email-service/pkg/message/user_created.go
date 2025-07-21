@@ -16,18 +16,11 @@ type UserCreatedEvent struct {
 	Message UserCreatePayload
 }
 
-func ParseUserCreatedMessage(data []byte) (*UserCreatedEvent, error) {
+func ParseMessage(data []byte) (*event.Envelope, error) {
 	var envelope event.Envelope
 	if err := json.Unmarshal(data, &envelope); err != nil {
 		return nil, err
 	}
-	var userMsg UserCreatePayload
-	if err := json.Unmarshal(envelope.Payload, &userMsg); err != nil {
-		return nil, err
-	}
 
-	return &UserCreatedEvent{
-		Envelope: envelope,
-		Message:  userMsg,
-	}, nil
+	return &envelope, nil
 }

@@ -63,6 +63,7 @@ func (h *PaymentHttpHandler) handleCheckoutWebhook(w http.ResponseWriter, r *htt
 		if session.PaymentStatus == "paid" {
 			log.Printf("Payment successfull for %s", session.ID)
 			orderID := session.Metadata["order_id"]
+			c := session.Metadata["customer"]
 			items := session.Metadata["items"]
 			Id, err := strconv.Atoi(orderID)
 			if err != nil {
@@ -76,9 +77,16 @@ func (h *PaymentHttpHandler) handleCheckoutWebhook(w http.ResponseWriter, r *htt
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			var customer message.Customer
+			if err := json.Unmarshal([]byte(c), &customer); err != nil {
+				log.Error().Msgf("Error unmarshalling items metadata: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 			payload, err := message.NewPaymentEnvelope("payment-service", "1", message.PaymentSucceededMessage{
-				OrderID: int32(Id),
-				Items:   orderItems,
+				OrderID:  int32(Id),
+				Customer: customer,
+				Items:    orderItems,
 			})
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()

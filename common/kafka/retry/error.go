@@ -54,6 +54,7 @@ func ShouldRetry(err error) bool {
 		"temporary",
 		"unavailable",
 		"deadlock",
+		"leader not available",
 	}
 
 	for _, keyword := range retryableKeywords {

@@ -6,9 +6,15 @@ message PaymentLinkResponse{
 }
 message PaymentLinkRequest{
   int32 order_id = 1;
-  float amount = 2;
-  repeated Items items = 3;
+  CustomerInfo customer=2;
+  float amount = 3;
+  repeated Items items = 4;
 
+}
+message CustomerInfo{
+  int32 customer_id=1;
+  string customer_name=2;
+  string customer_email=3;
 }
 message Items{
   int32 product_id = 1;

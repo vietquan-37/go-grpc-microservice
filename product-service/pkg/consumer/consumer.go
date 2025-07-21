@@ -30,14 +30,13 @@ func NewProductConsumer(repo repository.IProductRepo, cfg *config.Config, p *pro
 // TODO: Idempotent decrease
 func (c *ProductConsumer) Process(ctx context.Context, msg kafka.Message) error {
 	log.Debug().Msg("Processing payment succeeded message")
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 	event, err := message.ParsePaymentSucceededMessage(msg.Value)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to parse payment succeeded message")
 		return kafkaretry.NewNonRetryableError(err, "Cannot parse message")
 	}
-
 	log.Debug().
 		Str("event_type", event.EventType).
 		Str("event_id", event.EventID).
@@ -45,6 +44,7 @@ func (c *ProductConsumer) Process(ctx context.Context, msg kafka.Message) error 
 		Str("version", event.Version).
 		Time("OccurredAt", event.OccurredAt).
 		Msg("Received event")
+	// TODO: check process yet by redis
 
 	items := event.Message.Items
 	if len(items) == 0 {
@@ -75,7 +75,20 @@ func (c *ProductConsumer) Process(ctx context.Context, msg kafka.Message) error 
 				Int64("stock", product.Stock).
 				Int64("requested", reqQty).
 				Msg("Not enough stock for product")
-
+			//pub to order
+			payload, err := message.NewStockUpdateEnvelope(
+				"product-service",
+				"1",
+				"update.failed",
+				message.StockUpdateMessage{OrderID: event.Message.OrderID})
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to create stock update message")
+				return err
+			}
+			err = c.p.SendMessage(context.Background(), c.cfg.OrderTopic, nil, payload)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to send stock update message")
+			}
 			return kafkaretry.NewNonRetryableError(
 				fmt.Errorf("not enough stock for product %d", product.ID),
 				"Insufficient stock")
@@ -93,6 +106,21 @@ func (c *ProductConsumer) Process(ctx context.Context, msg kafka.Message) error 
 				Msg("Failed to decrease product stock")
 			return err
 		}
+	}
+	//pub to order
+	payload, err := message.NewStockUpdateEnvelope(
+		"product-service",
+		"1",
+		"update.success",
+		message.StockUpdateMessage{OrderID: event.Message.OrderID, Customer: event.Message.Customer, Items: items})
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create stock update message")
+		return err
+	}
+	err = c.p.SendMessage(context.Background(), c.cfg.OrderTopic, nil, payload)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to send stock update message")
+		return err
 	}
 
 	log.Info().Str("event_id", event.EventID).Msg("Successfully processed payment event and updated stocks")

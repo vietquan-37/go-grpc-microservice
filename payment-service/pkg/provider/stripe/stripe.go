@@ -40,6 +40,10 @@ func (s *Stripe) CreatePaymentLink(p *pb.PaymentLinkRequest) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to serialize items: %w", err)
 	}
+	customerJSON, err := json.Marshal(p.Customer)
+	if err != nil {
+		return "", fmt.Errorf("failed to serialize customer: %w", err)
+	}
 	params := &stripe.CheckoutSessionParams{
 		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
 		SuccessURL: stripe.String(s.cfg.SuccessURL),
@@ -47,6 +51,7 @@ func (s *Stripe) CreatePaymentLink(p *pb.PaymentLinkRequest) (string, error) {
 		LineItems:  items,
 		Metadata: map[string]string{
 			"order_id": fmt.Sprintf("%d", p.OrderId),
+			"customer": string(customerJSON),
 			"items":    string(itemsJSON),
 		},
 	}

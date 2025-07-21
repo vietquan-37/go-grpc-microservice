@@ -8,6 +8,7 @@ import (
 	"common/mtdt"
 	"common/timeout"
 	"common/validate"
+	"context"
 	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/auth-service/pkg/config"
 	"github.com/vietquan-37/auth-service/pkg/db"
@@ -31,6 +32,8 @@ type Server struct {
 	instanceId string
 	producer   *producer.Producer
 	grpcServer *grpc.Server
+	ctx        context.Context
+	cancel     context.CancelFunc
 	healthSrv  *health.Server
 	longTask   *sync.WaitGroup
 }
@@ -40,10 +43,12 @@ func newServer() *Server {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}
-
+	ctx, cancel := context.WithCancel(context.Background())
 	return &Server{
 		config:   c,
 		longTask: &sync.WaitGroup{},
+		ctx:      ctx,
+		cancel:   cancel,
 	}
 }
 
@@ -139,7 +144,6 @@ func (s *Server) start() error {
 	if err != nil {
 		return err
 	}
-
 	go func() {
 		log.Info().Msgf("Starting gRPC server at %s", lis.Addr().String())
 		if err := s.grpcServer.Serve(lis); err != nil {
@@ -152,12 +156,21 @@ func (s *Server) start() error {
 }
 
 func (s *Server) startHealthCheck() {
+
 	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
 		for {
-			if err := s.registry.HealthCheck(s.instanceId); err != nil {
-				log.Fatal().Err(err).Msg("failed to health check service")
+			select {
+			case <-s.ctx.Done():
+				log.Info().Msg("Health check stopped")
+				return
+			case <-ticker.C:
+				if err := s.registry.HealthCheck(s.instanceId); err != nil {
+					log.Error().Err(err).Msg("Health check failed")
+				}
 			}
-			time.Sleep(1 * time.Second)
 		}
 	}()
 }
@@ -168,13 +181,15 @@ func (s *Server) gracefulShutdown() {
 	if s.healthSrv != nil {
 		s.healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
 	}
-
-	s.longTask.Wait()
 	log.Info().Msg("waiting for goroutines to finish")
-
+	s.longTask.Wait()
 	if s.grpcServer != nil {
 		s.grpcServer.GracefulStop()
 	}
+	if s.cancel != nil {
+		s.cancel()
+	}
+	s.longTask.Wait()
 
 	log.Info().Msg("Server stopped gracefully")
 }

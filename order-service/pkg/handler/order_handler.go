@@ -190,9 +190,10 @@ func (h *OrderHandler) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest
 	}
 	res, err := h.PaymentClient.CreatePaymentLink(ctx,
 		&pb.PaymentLinkRequest{
-			OrderId: req.OrderId,
-			Amount:  float32(order.Amount),
-			Items:   covertToItems(order, productMap),
+			OrderId:  req.GetOrderId(),
+			Customer: convertUser(metadata),
+			Amount:   float32(order.Amount),
+			Items:    covertToItems(order, productMap),
 		},
 	)
 	if res == nil {

@@ -54,7 +54,6 @@ type Server struct {
 	consumer   *kafka_retry.ConsumerWithRetry
 	ctx        context.Context
 	cancel     context.CancelFunc
-
 	wg         *sync.WaitGroup
 	grpcServer *grpc.Server
 	healthSrv  *health.Server
@@ -170,9 +169,8 @@ func (s *Server) Start() error {
 		log.Info().Msg("Kafka consumer stopped")
 	}()
 
-	s.wg.Add(1)
 	go func() {
-		defer s.wg.Done()
+
 		log.Info().Msgf("Starting gRPC server at %s", lis.Addr().String())
 		if err := s.grpcServer.Serve(lis); err != nil {
 			log.Error().Err(err).Msg("gRPC server failed")
@@ -207,9 +205,8 @@ func (s *Server) gracefulShutdown() {
 }
 
 func (s *Server) startHealthCheck() {
-	s.wg.Add(1)
+
 	go func() {
-		defer s.wg.Done()
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 
