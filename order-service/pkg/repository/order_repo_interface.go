@@ -11,7 +11,7 @@ type IOrderRepo interface {
 	UpdateOrder(ctx context.Context, order *model.Order) error
 	GetOrderById(ctx context.Context, orderId int32) (*model.Order, error)
 	CreateOrderDetail(ctx context.Context, detail *model.OrderDetail) (error error)
-	GetOrderDetailByProductId(ctx context.Context, productId int32) (*model.OrderDetail, error)
+	GetOrderDetailByProductIdAndOrderId(ctx context.Context, productId int32, orderId int32) (*model.OrderDetail, error)
 	DeleteOrderDetail(ctx context.Context, model *model.OrderDetail) (err error)
 	GetOrderDetailById(ctx context.Context, id int32) (*model.OrderDetail, error)
 	UpdateOrderDetail(ctx context.Context, model *model.OrderDetail) (err error)

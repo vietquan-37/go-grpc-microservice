@@ -53,7 +53,7 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 		}
 	}
 	price := float64(product.Price * float32(req.GetStock()))
-	detail, _ := h.Repo.GetOrderDetailByProductId(ctx, product.GetId())
+	detail, _ := h.Repo.GetOrderDetailByProductIdAndOrderId(ctx, product.GetId(), int32(order.ID))
 	if detail != nil && detail.Quantity+req.GetStock() > product.Stock {
 		return nil, status.Errorf(codes.InvalidArgument, "Product stock is insufficient")
 	}
@@ -65,7 +65,9 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 				Quantity:  req.GetStock(),
 				Price:     float64(product.Price),
 			}
+
 			err = repo.CreateOrderDetail(ctx, models)
+
 			if err != nil {
 				return err
 			}
@@ -78,6 +80,7 @@ func (h *OrderHandler) AddProduct(ctx context.Context, req *pb.AddProductRequest
 			}
 		}
 		order.Amount += price
+
 		err = repo.UpdateOrder(ctx, order)
 		if err != nil {
 			return err

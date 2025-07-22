@@ -53,9 +53,11 @@ func (r *OrderRepo) CreateOrderDetail(ctx context.Context, detail *model.OrderDe
 	}
 	return nil
 }
-func (r *OrderRepo) GetOrderDetailByProductId(ctx context.Context, productId int32) (*model.OrderDetail, error) {
+func (r *OrderRepo) GetOrderDetailByProductIdAndOrderId(ctx context.Context, productId int32, orderId int32) (*model.OrderDetail, error) {
 	var orderDetail model.OrderDetail
-	err := r.DB.WithContext(ctx).Where("product_id = ?", productId).First(&orderDetail).Error
+	err := r.DB.WithContext(ctx).
+		Where("product_id = ? AND order_id = ?", productId, orderId).
+		First(&orderDetail).Error
 	if err != nil {
 		return nil, err
 	}

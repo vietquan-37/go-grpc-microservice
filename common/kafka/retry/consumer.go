@@ -31,11 +31,12 @@ func NewConsumerWithRetry(brokers []string, topic string, groupId string, handle
 		workerCount = 1
 	}
 	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  brokers,
-		Topic:    topic,
-		GroupID:  groupId,
-		MinBytes: 10e3,
-		MaxBytes: 10e6,
+		Brokers:        brokers,
+		Topic:          topic,
+		CommitInterval: 0,
+		GroupID:        groupId,
+		MinBytes:       10e3,
+		MaxBytes:       10e6,
 	})
 	return &ConsumerWithRetry{
 		reader:      reader,
@@ -123,7 +124,7 @@ func (c *ConsumerWithRetry) consumeLoop(ctx context.Context) error {
 			}
 
 			if err := c.handler.Process(ctx, msg); err != nil {
-				if !ShouldRetry(err) {
+				if ShouldRetry(err) {
 					log.Printf("Processing failed for %s, adding to retry queue", string(msg.Key))
 					select {
 					case c.retryQueue <- msg:
