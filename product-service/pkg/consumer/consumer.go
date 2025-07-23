@@ -1,9 +1,11 @@
 package consumer
 
 import (
+	"common/cache"
 	"common/kafka/producer"
 	kafkaretry "common/kafka/retry"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"github.com/segmentio/kafka-go"
@@ -14,16 +16,18 @@ import (
 )
 
 type ProductConsumer struct {
-	repo repository.IProductRepo
-	cfg  *config.Config
-	p    *producer.Producer
+	repo  repository.IProductRepo
+	cfg   *config.Config
+	p     *producer.Producer
+	redis cache.Client
 }
 
-func NewProductConsumer(repo repository.IProductRepo, cfg *config.Config, p *producer.Producer) *ProductConsumer {
+func NewProductConsumer(repo repository.IProductRepo, cfg *config.Config, p *producer.Producer, redis cache.Client) *ProductConsumer {
 	return &ProductConsumer{
-		repo: repo,
-		cfg:  cfg,
-		p:    p,
+		repo:  repo,
+		cfg:   cfg,
+		p:     p,
+		redis: redis,
 	}
 }
 
@@ -44,8 +48,17 @@ func (c *ProductConsumer) Process(ctx context.Context, msg kafka.Message) error 
 		Str("version", event.Version).
 		Time("OccurredAt", event.OccurredAt).
 		Msg("Received event")
-	// TODO: check process yet by redis
-
+	// TODO: check process yet by cache DONE
+	eventKey := fmt.Sprintf("processed_event:%s", event.EventID)
+	processed, err := c.redis.Get(ctx, eventKey)
+	if err != nil && !errors.Is(err, cache.ErrorCacheMiss) {
+		log.Error().Err(err).Str("event_key", eventKey).Msg("Failed to get event")
+		return kafkaretry.NewRetryableError(err, "Cannot get event")
+	}
+	if processed != nil {
+		log.Info().Type("msg", event).Msg("Event already processed")
+		return nil
+	}
 	items := event.Message.Items
 	if len(items) == 0 {
 		log.Warn().Msg("No items in payment message")
@@ -75,6 +88,11 @@ func (c *ProductConsumer) Process(ctx context.Context, msg kafka.Message) error 
 				Int64("stock", product.Stock).
 				Int64("requested", reqQty).
 				Msg("Not enough stock for product")
+
+			err = c.markEventAsProcessed(ctx, event.EventID, "fail")
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to mark event as processed")
+			}
 			//pub to order
 			payload, err := message.NewStockUpdateEnvelope(
 				"product-service",
@@ -106,6 +124,11 @@ func (c *ProductConsumer) Process(ctx context.Context, msg kafka.Message) error 
 				Msg("Failed to decrease product stock")
 			return err
 		}
+	}
+	//mark as completed
+	err = c.markEventAsProcessed(ctx, event.EventID, "success")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to mark event as processed")
 	}
 	//pub to order
 	payload, err := message.NewStockUpdateEnvelope(
@@ -142,4 +165,11 @@ func (c *ProductConsumer) MoveToDLQ(ctx context.Context, msg kafka.Message, reas
 		log.Info().Str("dlq_topic", c.cfg.DLQTOPIC).
 			Msg("Published message to DLQ")
 	}
+}
+func (c *ProductConsumer) markEventAsProcessed(ctx context.Context, eventID, status string) error {
+	eventKey := fmt.Sprintf("processed_event:%s", eventID)
+	value := fmt.Sprintf("processed_at_%d_status_%s", time.Now().Unix(), status)
+	ttl := 1 * time.Hour
+
+	return c.redis.Set(ctx, eventKey, value, ttl)
 }

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"common/cache"
 	commonclient "common/client"
 	"common/discovery"
 	"common/discovery/consul"
@@ -230,7 +231,8 @@ func (s *Server) setUpProducer() {
 
 func (s *Server) setupConsumer() {
 	repo := repository.NewProductRepo(s.db)
-	productConsumer := consumer.NewProductConsumer(repo, s.config, s.producer)
+	redisCache := cache.NewClient(s.config.RedisAddr, s.config.RedisUsername, s.config.RedisPassword)
+	productConsumer := consumer.NewProductConsumer(repo, s.config, s.producer, redisCache)
 	s.consumer = kafka_retry.NewConsumerWithRetry(
 		s.config.BrokerAddr,
 		s.config.PaymentTopic,

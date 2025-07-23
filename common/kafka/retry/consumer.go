@@ -140,10 +140,12 @@ func (c *ConsumerWithRetry) consumeLoop(ctx context.Context) error {
 				}
 				continue
 			}
-
+			//log.Info().Msg("Begin to sleep")
+			//time.Sleep(time.Second * 20) just for testing
 			if err := c.reader.CommitMessages(ctx, msg); err != nil {
 				log.Error().Msgf("Commit failed: %v", err)
 			}
+			log.Info().Msgf("Successfully processed for %s", string(msg.Key))
 		}
 	}
 }

@@ -17,6 +17,9 @@ type Config struct {
 	DLQTOPIC        string   `mapstructure:"DLQ_TOPIC"`
 	GroupId         string   `mapstructure:"GROUP_ID"`
 	OrderTopic      string   `mapstructure:"ORDER_TOPIC"`
+	RedisAddr       string   `mapstructure:"REDIS_ADDR"`
+	RedisUsername   string   `mapstructure:"REDIS_USERNAME"`
+	RedisPassword   string   `mapstructure:"REDIS_PASSWORD"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {
