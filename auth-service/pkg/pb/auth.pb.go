@@ -463,6 +463,50 @@ func (x *GoogleLoginRequest) GetCode() string {
 	return ""
 }
 
+type CommonResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CommonResponse) Reset() {
+	*x = CommonResponse{}
+	mi := &file_auth_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommonResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommonResponse) ProtoMessage() {}
+
+func (x *CommonResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommonResponse.ProtoReflect.Descriptor instead.
+func (*CommonResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *CommonResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_auth_proto protoreflect.FileDescriptor
 
 const file_auth_proto_rawDesc = "" +
@@ -495,8 +539,11 @@ const file_auth_proto_rawDesc = "" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12\x17\n" +
 	"\auser_id\x18\x03 \x01(\x05R\x06userId\"(\n" +
 	"\x12GoogleLoginRequest\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code2\xa2\x02\n" +
-	"\vAuthService\x125\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\"*\n" +
+	"\x0eCommonResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage2\xde\x02\n" +
+	"\vAuthService\x12:\n" +
+	"\rVerifyAccount\x12\x13.pb.ValidateRequest\x1a\x12.pb.CommonResponse\"\x00\x125\n" +
 	"\bRegister\x12\x15.pb.CreateUserRequest\x1a\x10.pb.UserResponse\"\x00\x12.\n" +
 	"\x05Login\x12\x10.pb.LoginRequest\x1a\x11.pb.LoginResponse\"\x00\x12:\n" +
 	"\vGoogleLogin\x12\x16.pb.GoogleLoginRequest\x1a\x11.pb.LoginResponse\"\x00\x127\n" +
@@ -517,7 +564,7 @@ func file_auth_proto_rawDescGZIP() []byte {
 	return file_auth_proto_rawDescData
 }
 
-var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_auth_proto_goTypes = []any{
 	(*CreateUserRequest)(nil),     // 0: pb.CreateUserRequest
 	(*UserResponse)(nil),          // 1: pb.UserResponse
@@ -527,23 +574,26 @@ var file_auth_proto_goTypes = []any{
 	(*LoginRequest)(nil),          // 5: pb.LoginRequest
 	(*LoginResponse)(nil),         // 6: pb.LoginResponse
 	(*GoogleLoginRequest)(nil),    // 7: pb.GoogleLoginRequest
-	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+	(*CommonResponse)(nil),        // 8: pb.CommonResponse
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
 }
 var file_auth_proto_depIdxs = []int32{
-	8, // 0: pb.UserResponse.create_at:type_name -> google.protobuf.Timestamp
+	9, // 0: pb.UserResponse.create_at:type_name -> google.protobuf.Timestamp
 	1, // 1: pb.ValidateResponse.user:type_name -> pb.UserResponse
-	0, // 2: pb.AuthService.Register:input_type -> pb.CreateUserRequest
-	5, // 3: pb.AuthService.Login:input_type -> pb.LoginRequest
-	7, // 4: pb.AuthService.GoogleLogin:input_type -> pb.GoogleLoginRequest
-	2, // 5: pb.AuthService.GetOneUser:input_type -> pb.GetOneUserRequest
-	3, // 6: pb.AuthService.Validate:input_type -> pb.ValidateRequest
-	1, // 7: pb.AuthService.Register:output_type -> pb.UserResponse
-	6, // 8: pb.AuthService.Login:output_type -> pb.LoginResponse
-	6, // 9: pb.AuthService.GoogleLogin:output_type -> pb.LoginResponse
-	1, // 10: pb.AuthService.GetOneUser:output_type -> pb.UserResponse
-	4, // 11: pb.AuthService.Validate:output_type -> pb.ValidateResponse
-	7, // [7:12] is the sub-list for method output_type
-	2, // [2:7] is the sub-list for method input_type
+	3, // 2: pb.AuthService.VerifyAccount:input_type -> pb.ValidateRequest
+	0, // 3: pb.AuthService.Register:input_type -> pb.CreateUserRequest
+	5, // 4: pb.AuthService.Login:input_type -> pb.LoginRequest
+	7, // 5: pb.AuthService.GoogleLogin:input_type -> pb.GoogleLoginRequest
+	2, // 6: pb.AuthService.GetOneUser:input_type -> pb.GetOneUserRequest
+	3, // 7: pb.AuthService.Validate:input_type -> pb.ValidateRequest
+	8, // 8: pb.AuthService.VerifyAccount:output_type -> pb.CommonResponse
+	1, // 9: pb.AuthService.Register:output_type -> pb.UserResponse
+	6, // 10: pb.AuthService.Login:output_type -> pb.LoginResponse
+	6, // 11: pb.AuthService.GoogleLogin:output_type -> pb.LoginResponse
+	1, // 12: pb.AuthService.GetOneUser:output_type -> pb.UserResponse
+	4, // 13: pb.AuthService.Validate:output_type -> pb.ValidateResponse
+	8, // [8:14] is the sub-list for method output_type
+	2, // [2:8] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
 	2, // [2:2] is the sub-list for extension extendee
 	0, // [0:2] is the sub-list for field type_name
@@ -560,7 +610,7 @@ func file_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_proto_rawDesc), len(file_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

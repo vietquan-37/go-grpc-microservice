@@ -41,6 +41,7 @@ func convertUserInfo(response *oauth2.GoogleUserResponse) *model.User {
 		Username: response.Email,
 		FullName: fmt.Sprintf("%s %s", response.FamilyName, response.GivenName),
 		Role:     enum.UserRole,
+		Active:   true,
 	}
 
 }

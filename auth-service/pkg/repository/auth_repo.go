@@ -40,6 +40,13 @@ func NewAuthRepo(db *gorm.DB, adminUsername, adminPassword string) IAuthRepo {
 	}
 	return repo
 }
+func (repo *AuthRepo) UpdateUser(ctx context.Context, user *model.User) error {
+	err := repo.DB.WithContext(ctx).Save(user).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (repo *AuthRepo) GetUserByUserName(ctx context.Context, username string) (*model.User, error) {
 	var dbUser model.User

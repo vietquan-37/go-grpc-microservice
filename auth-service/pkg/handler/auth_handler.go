@@ -1,12 +1,17 @@
 package handler
 
 import (
+	"common/cache"
 	"common/kafka/producer"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/rs/zerolog/log"
 	"github.com/vietquan-37/auth-service/pkg/config"
 	"github.com/vietquan-37/auth-service/pkg/message"
+	"github.com/vietquan-37/auth-service/pkg/model"
+	"github.com/vietquan-37/auth-service/pkg/model/enum"
 	"github.com/vietquan-37/auth-service/pkg/oauth2"
 	"sync"
 
@@ -25,14 +30,16 @@ type Handler struct {
 	Repo     repository.IAuthRepo
 	Config   config.Config
 	Producer *producer.Producer
+	redis    cache.Client
 }
 
-func NewAuthHandler(jwt config.JwtWrapper, repo repository.IAuthRepo, config config.Config, wait *sync.WaitGroup, producer *producer.Producer) *Handler {
+func NewAuthHandler(jwt config.JwtWrapper, repo repository.IAuthRepo, config config.Config, wait *sync.WaitGroup, producer *producer.Producer, redis cache.Client) *Handler {
 	return &Handler{
 		Jwt:      jwt,
 		Repo:     repo,
 		Config:   config,
 		wg:       wait,
+		redis:    redis,
 		Producer: producer,
 	}
 }
@@ -43,15 +50,12 @@ func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest)
 		return nil, status.Errorf(codes.Internal, "error while hashing password: %s", err)
 	}
 	req.Password = hashPassword
-	model := convertUser(req)
+	m := convertUser(req)
 
-	user, err := handler.Repo.CreateUser(ctx, model)
+	user, err := handler.Repo.CreateUser(ctx, m)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return nil, status.Errorf(codes.AlreadyExists, "email %s already register before", req.UserName)
-		}
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, status.Errorf(codes.DeadlineExceeded, "Request timeout: %v", err)
 		}
 		return nil, status.Errorf(codes.Internal, "error while creating user: %s", err)
 	}
@@ -59,6 +63,17 @@ func (handler *Handler) Register(ctx context.Context, req *pb.CreateUserRequest)
 	token, err := handler.Jwt.GenerateJWT(user, time.Hour)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error while generating token: %v", err)
+	}
+	expiresAt := time.Now().Add(time.Hour).Unix()
+	redisPayload := model.TokenPayload{
+		Token:     token,
+		UserID:    int32(user.ID),
+		TokenType: enum.Verification,
+		ExpiredAt: expiresAt,
+	}
+	err = handler.SaveVerificationToken(ctx, redisPayload)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while saving token to redis: %s", err)
 	}
 	payload, err := message.NewUserCreatedEnvelope("auth-service", "1", message.UserCreateMessage{
 		ID:       int32(user.ID),
@@ -89,13 +104,13 @@ func (handler *Handler) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Lo
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "user with email %s not found", req.GetUserName())
 		}
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, status.Errorf(codes.DeadlineExceeded, "Request timeout: %v", err)
-		}
 		return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
 	}
 	if err = config.CheckPassword(req.GetPassword(), user.Password); err != nil {
 		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
+	}
+	if !user.Active {
+		return nil, status.Error(codes.Unauthenticated, "user is not active")
 	}
 
 	accessToken, err := handler.Jwt.GenerateJWT(user, time.Hour)
@@ -120,9 +135,7 @@ func (handler *Handler) GetOneUser(ctx context.Context, req *pb.GetOneUserReques
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "user with id %d not found", req.GetId())
 		}
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, status.Errorf(codes.DeadlineExceeded, "Request timeout: %v", err)
-		}
+
 		return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
 	}
 	rsp := convertUserResponse(user)
@@ -139,9 +152,7 @@ func (handler *Handler) Validate(ctx context.Context, req *pb.ValidateRequest) (
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "user with id %d not found", claims.Id)
 		}
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, status.Errorf(codes.DeadlineExceeded, "Request timeout: %v", err)
-		}
+
 		return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
 	}
 	return convertValidate(user), nil
@@ -186,6 +197,93 @@ func (handler *Handler) GoogleLogin(ctx context.Context, req *pb.GoogleLoginRequ
 	return &pb.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+	}, nil
+
+}
+func (handler *Handler) SaveVerificationToken(ctx context.Context, payload model.TokenPayload) error {
+	key := fmt.Sprintf("verify:%s", payload.Token)
+	return handler.redis.Set(ctx, key, payload, time.Hour*2)
+}
+func (handler *Handler) GetVerificationToken(ctx context.Context, token string) (*model.TokenPayload, error) {
+	key := fmt.Sprintf("verify:%s", token)
+	val, err := handler.redis.Get(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	var bytesVal []byte
+	switch v := val.(type) {
+	case string:
+		bytesVal = []byte(v)
+	case []byte:
+		bytesVal = v
+	default:
+		return nil, fmt.Errorf("unexpected redis value type: %T", val)
+	}
+
+	var payload model.TokenPayload
+	if err := json.Unmarshal(bytesVal, &payload); err != nil {
+		return nil, err
+	}
+
+	return &payload, nil
+}
+
+func (handler *Handler) VerifyAccount(ctx context.Context, req *pb.ValidateRequest) (*pb.CommonResponse, error) {
+	payload, err := handler.GetVerificationToken(ctx, req.GetToken())
+	if err != nil {
+		if errors.Is(err, cache.ErrorCacheMiss) {
+			return nil, status.Error(codes.InvalidArgument, "Invalid token")
+		}
+		return nil, status.Errorf(codes.Internal, "error while verifying token: %v", err)
+	}
+	if payload.TokenType != enum.Verification {
+		return nil, status.Error(codes.InvalidArgument, "Invalid token")
+	}
+	user, err := handler.Repo.FindOneUser(ctx, payload.UserID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "user with id %d not found", payload.UserID)
+		}
+		return nil, status.Errorf(codes.Internal, "error while retrieving user: %v", err)
+	}
+	if time.Now().Unix() > payload.ExpiredAt {
+		token, err := handler.Jwt.GenerateJWT(user, time.Hour)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error while generating token: %v", err)
+		}
+		payload, err := message.NewUserCreatedEnvelope("auth-service", "1", message.UserCreateMessage{
+			ID:       int32(user.ID),
+			Email:    user.Username,
+			FullName: user.FullName,
+			Token:    token})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error while creating user message: %s", err)
+		}
+		handler.wg.Add(1)
+		go func() {
+			defer handler.wg.Done()
+			if err := handler.Producer.SendMessage(context.Background(), handler.Config.Topic, nil, payload); err != nil {
+				log.Error().
+					Err(err).
+					Uint("user_id", user.ID).
+					Str("email", user.Username).
+					Str("topic", handler.Config.Topic).
+					Msg("CRITICAL: Failed to send user created message to Kafka")
+			}
+		}()
+		return nil, status.Error(codes.DeadlineExceeded, "Token has expired")
+	}
+	if user.Active {
+		return nil, status.Error(codes.InvalidArgument, "User is already active")
+	}
+	user.Active = true
+	err = handler.Repo.UpdateUser(ctx, user)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while updating user: %v", err)
+	}
+	return &pb.CommonResponse{
+		Message: "User verified successfully",
 	}, nil
 
 }
